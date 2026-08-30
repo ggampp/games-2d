@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>THE LONG SPECTRUM - Optics Physics Puzzle Game</title>
+    <meta name="description" content="An optics puzzle game prototype where you place mirrors and prisms to bounce light, refract chromatic spectrums, and illuminate colored beacon targets.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-wrapper">
+        <!-- Top Navigation Header -->
+        <header class="game-header">
+            <div class="header-left">
+                <span class="level-indicator" id="levelNumber">LEVEL 13</span>
+                <h1 class="game-title" id="levelTitle">THE LONG SPECTRUM</h1>
+            </div>
+            <div class="header-right">
+                <button class="tech-btn" id="resetBtn" title="Reset current puzzle (R)">RESET</button>
+                <button class="tech-btn" id="hintBtn" title="Show puzzle hint">HINT</button>
+                <button class="tech-btn" id="levelsBtn" title="Choose level">LEVELS</button>
+                <button class="tech-btn" id="soundBtn" title="Toggle audio">SOUND</button>
+            </div>
+        </header>
+
+        <!-- Main Game Board -->
+        <main class="board-container">
+            <canvas id="gameCanvas"></canvas>
+        </main>
+
+        <!-- Bottom Status & Hint Readout -->
+        <div class="status-bar">
+            <p class="hint-caption" id="hintText">FOUR TURNS TO REACH THE FLOOR - THE PRISM GOES IN THE LAST STRAIGHT</p>
+            <div class="par-badge" id="parCounter">USED 0 · PAR 5</div>
+        </div>
+
+        <!-- Optical Inventory Dock -->
+        <nav class="inventory-dock" aria-label="Toolbox">
+            <div class="inventory-card" id="mirrorCard" title="Click or Drag onto board to place a Mirror">
+                <div class="badge" id="mirrorBadge">4</div>
+                <div class="item-icon mirror-icon"></div>
+                <span class="item-label">MIRROR</span>
+            </div>
+
+            <div class="inventory-card" id="prismCard" title="Click or Drag onto board to place a Prism">
+                <div class="badge" id="prismBadge">1</div>
+                <div class="item-icon prism-icon"></div>
+                <span class="item-label">PRISM</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Victory Modal (Solved) -->
+    <div class="modal-overlay hidden" id="victoryModal">
+        <div class="modal-card victory-card">
+            <h2 class="victory-title">SOLVED</h2>
+            <p class="victory-subtitle" id="victoryStats">5 PIECES USED · PAR 5</p>
+            <div class="modal-actions">
+                <button class="action-btn primary" id="nextLevelBtn">NEXT LEVEL</button>
+                <button class="action-btn secondary" id="freePlayBtn">FREE PLAY</button>
+                <button class="action-btn outline" id="victoryLevelsBtn">LEVELS</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Level Selection Modal -->
+    <div class="modal-overlay hidden" id="levelsModal">
+        <div class="modal-card levels-card">
+            <div class="modal-header">
+                <h3>SELECT PUZZLE</h3>
+                <button class="close-btn" id="closeLevelsModal">&times;</button>
+            </div>
+            <div class="levels-grid" id="levelsGrid">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Hint Modal -->
+    <div class="modal-overlay hidden" id="hintModal">
+        <div class="modal-card hint-card">
+            <div class="modal-header">
+                <h3>PUZZLE HINT</h3>
+                <button class="close-btn" id="closeHintModal">&times;</button>
+            </div>
+            <p class="hint-dialog-text" id="hintModalText"></p>
+            <div class="modal-actions">
+                <button class="action-btn primary" id="closeHintModalBtn" onclick="document.getElementById('hintModal').classList.add('hidden')">GOT IT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/optics.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

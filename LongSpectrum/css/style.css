@@ -1,0 +1,555 @@
+/* ==========================================================================
+   THE LONG SPECTRUM - Main Stylesheet
+   Dark Sci-Fi Optics Laboratory Aesthetic
+   ========================================================================== */
+
+:root {
+    --bg-dark: #060608;
+    --bg-card: #0c0e14;
+    --border-subtle: #1f2533;
+    --border-hover: #3b82f6;
+    --text-main: #f8fafc;
+    --text-muted: #64748b;
+    --text-dim: #475569;
+    --accent-blue: #3b82f6;
+    --accent-cyan: #38bdf8;
+    --accent-glow: rgba(59, 130, 246, 0.4);
+    --font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: var(--font-mono);
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Outer layout wrapper */
+.game-wrapper {
+    width: 100%;
+    max-width: 680px;
+    padding: 16px 20px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Header */
+.game-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 4px;
+}
+
+.header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.level-indicator {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.game-title {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 3.5px;
+    color: #ffffff;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
+}
+
+.header-right {
+    display: flex;
+    gap: 6px;
+}
+
+/* Minimalist Tech Buttons */
+.tech-btn {
+    background: #0d1117;
+    border: 1px solid #2d3342;
+    color: #cbd5e1;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-transform: uppercase;
+}
+
+.tech-btn:hover {
+    border-color: #94a3b8;
+    color: #ffffff;
+    background: #161b26;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.tech-btn:active {
+    transform: scale(0.96);
+}
+
+.tech-btn.muted {
+    border-color: #ef4444;
+    color: #f87171;
+}
+
+/* Game Board Canvas Container */
+.board-container {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 640px;
+    max-height: 640px;
+    position: relative;
+    background: #000000;
+    border-radius: 6px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), 0 0 1px rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    touch-action: none;
+}
+
+#gameCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Status & Hint Bar */
+.status-bar {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+}
+
+.hint-caption {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #475569;
+    text-transform: uppercase;
+    max-width: 90%;
+    line-height: 1.4;
+}
+
+.par-badge {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+/* Optical Inventory Dock */
+.inventory-dock {
+    display: flex;
+    gap: 16px;
+    margin-top: 4px;
+}
+
+.inventory-card {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    background: #0b0e14;
+    border: 1.5px solid #232a3b;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: grab;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.inventory-card:hover:not(.disabled) {
+    border-color: #60a5fa;
+    background: #111724;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(96, 165, 250, 0.2);
+}
+
+.inventory-card:active:not(.disabled) {
+    cursor: grabbing;
+    transform: scale(0.95);
+}
+
+.inventory-card.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: #1a1e28;
+}
+
+/* Inventory Badge Count */
+.inventory-card .badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #ffffff;
+    color: #000000;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 800;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+/* Icons */
+.item-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mirror-icon {
+    position: relative;
+}
+
+.mirror-icon::before {
+    content: '';
+    width: 30px;
+    height: 4px;
+    background: linear-gradient(90deg, #94a3b8, #ffffff, #94a3b8);
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+.prism-icon {
+    position: relative;
+}
+
+.prism-icon::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 14px solid transparent;
+    border-right: 14px solid transparent;
+    border-bottom: 24px solid rgba(226, 232, 240, 0.85);
+    filter: drop-shadow(0 0 6px rgba(96, 165, 250, 0.6));
+}
+
+.item-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #64748b;
+    text-transform: uppercase;
+}
+
+/* Modals */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+    animation: fadeIn 0.25s ease-out;
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+.modal-card {
+    background: #090c12;
+    border: 1px solid #252e42;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 30px rgba(59, 130, 246, 0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Solved Victory Card (matching tweet video screenshot frame 17) */
+.victory-card {
+    width: 100%;
+    max-width: 380px;
+    padding: 36px 28px 30px;
+    text-align: center;
+    gap: 16px;
+}
+
+.victory-title {
+    font-family: var(--font-mono);
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: 8px;
+    color: #ffffff;
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+}
+
+.victory-subtitle {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.modal-actions {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.action-btn {
+    width: 100%;
+    padding: 12px 18px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+.action-btn.primary {
+    background: #ffffff;
+    color: #000000;
+    border: none;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.25);
+}
+
+.action-btn.primary:hover {
+    background: #e2e8f0;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+}
+
+.action-btn.secondary {
+    background: #131926;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+}
+
+.action-btn.secondary:hover {
+    background: #1e293b;
+    color: #ffffff;
+    border-color: #64748b;
+}
+
+.action-btn.outline {
+    background: transparent;
+    color: #64748b;
+    border: 1px solid #1e293b;
+}
+
+.action-btn.outline:hover {
+    color: #cbd5e1;
+    border-color: #475569;
+}
+
+/* Level Selection Modal */
+.levels-card {
+    width: 100%;
+    max-width: 480px;
+    max-height: 80vh;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.modal-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    letter-spacing: 3px;
+    color: #ffffff;
+}
+
+.close-btn {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 22px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 6px;
+}
+
+.close-btn:hover {
+    color: #ffffff;
+}
+
+.levels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    width: 100%;
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.level-card-btn {
+    background: #0f141f;
+    border: 1px solid #232c3d;
+    border-radius: 4px;
+    padding: 12px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.level-card-btn:hover {
+    border-color: #60a5fa;
+    background: #172033;
+    transform: translateY(-2px);
+}
+
+.level-card-btn.current {
+    border-color: #38bdf8;
+    background: #0c2340;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+}
+
+.level-card-btn.completed .lvl-num {
+    color: #4ade80;
+}
+
+.lvl-num {
+    font-size: 16px;
+    font-weight: 800;
+    color: #f8fafc;
+}
+
+.lvl-name {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #64748b;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.level-card-btn.sandbox {
+    border-color: #a855f7;
+}
+
+.level-card-btn.sandbox .lvl-num {
+    color: #c084fc;
+}
+
+/* Hint Modal */
+.hint-card {
+    width: 100%;
+    max-width: 400px;
+    padding: 24px;
+    gap: 16px;
+}
+
+.hint-dialog-text {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #cbd5e1;
+    text-align: center;
+}
+
+/* Keyframe Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #080b10;
+}
+::-webkit-scrollbar-thumb {
+    background: #232c3d;
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #3b82f6;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 540px) {
+    .game-wrapper {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+    .game-title {
+        font-size: 15px;
+        letter-spacing: 2px;
+    }
+    .tech-btn {
+        font-size: 9px;
+        padding: 5px 8px;
+        letter-spacing: 1px;
+    }
+    .inventory-card {
+        width: 70px;
+        height: 70px;
+    }
+    .hint-caption {
+        font-size: 9px;
+    }
+}

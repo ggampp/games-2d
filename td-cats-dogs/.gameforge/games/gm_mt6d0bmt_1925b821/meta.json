@@ -1,0 +1,15 @@
+{
+  "gameId": "gm_mt6d0bmt_1925b821",
+  "kind": "folder",
+  "title": "Cat Line Defense",
+  "source": "d:\\claude_projects\\dev-games\\td-cats-dogs",
+  "createdAt": "2026-08-23T22:09:05.002Z",
+  "updatedAt": "2026-08-23T22:09:05.002Z",
+  "genreId": "tower-defense",
+  "engine": "unknown",
+  "paths": {
+    "meta": "d:\\claude_projects\\dev-games\\td-cats-dogs\\.gameforge\\games\\gm_mt6d0bmt_1925b821\\meta.json",
+    "extract": "d:\\claude_projects\\dev-games\\td-cats-dogs\\.gameforge\\games\\gm_mt6d0bmt_1925b821\\extract.json",
+    "systems": "d:\\claude_projects\\dev-games\\td-cats-dogs\\.gameforge\\games\\gm_mt6d0bmt_1925b821\\systems\\index.json"
+  }
+}

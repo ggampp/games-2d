@@ -1,0 +1,64 @@
+{
+  "gameId": "gm_mt6d0bmt_1925b821",
+  "kind": "folder",
+  "title": "Cat Line Defense",
+  "source": "d:\\claude_projects\\dev-games\\td-cats-dogs",
+  "engine": "unknown",
+  "classified": {
+    "genre": {
+      "id": "tower-defense",
+      "name": "Tower defense",
+      "score": 7,
+      "reasons": [
+        "alias:tower defense",
+        "id:tower-defense"
+      ]
+    },
+    "alternatives": [
+      {
+        "id": "endless-runner",
+        "name": "Endless runner",
+        "score": 0,
+        "reasons": []
+      },
+      {
+        "id": "arcade-action",
+        "name": "Arcade action",
+        "score": 0,
+        "reasons": []
+      },
+      {
+        "id": "platformer",
+        "name": "Platformer",
+        "score": 0,
+        "reasons": []
+      }
+    ],
+    "artStyle": {
+      "id": "cel-shaded",
+      "name": "Cel / toon",
+      "score": 4,
+      "reasons": [
+        "alias:cel",
+        "alias:toon"
+      ]
+    },
+    "artAlternatives": [
+      {
+        "id": "low-poly",
+        "name": "Low poly stylized",
+        "score": 0,
+        "reasons": []
+      },
+      {
+        "id": "pbr-realistic",
+        "name": "PBR semi-realista",
+        "score": 0,
+        "reasons": []
+      }
+    ],
+    "confidence": 0.7,
+    "textUsed": "Cartoon 2D line-defense browser game (tower-defense genre). Armed cats stand on the left and shoot right while zombie waves walk from the right toward the base. Primary verb: place and upgrade cats along a line (Cat1 to Cat15 visual upgrade chain from Craftpix free cartoon cat defense kit). Special units later: CatBoxing melee and CatGuardian tank. Fail when base HP hits 0 from leaks. Win by survi"
+  },
+  "systems": []
+}

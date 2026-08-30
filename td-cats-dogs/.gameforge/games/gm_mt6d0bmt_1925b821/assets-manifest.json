@@ -1,0 +1,32 @@
+{
+  "assets": [
+    {
+      "key": "cat1",
+      "kind": "sprite",
+      "path": "d:\\claude_projects\\dev-games\\td-cats-dogs\\public\\generated\\cat1.png",
+      "provider": "host",
+      "registeredAt": "2026-08-23T22:18:47.362Z"
+    },
+    {
+      "key": "battlefield",
+      "kind": "texture",
+      "path": "d:\\claude_projects\\dev-games\\td-cats-dogs\\public\\generated\\battlefield.png",
+      "provider": "host",
+      "registeredAt": "2026-08-23T22:18:48.115Z"
+    },
+    {
+      "key": "zombie-reg1",
+      "kind": "sprite",
+      "path": "d:\\claude_projects\\dev-games\\td-cats-dogs\\public\\generated\\zombie-reg1.png",
+      "provider": "host",
+      "registeredAt": "2026-08-23T22:18:48.671Z"
+    },
+    {
+      "key": "cat1-atlas",
+      "kind": "texture",
+      "path": "d:\\claude_projects\\dev-games\\td-cats-dogs\\free-cartoon-cat-defense-game-asset-kit\\Json Atlas\\Cat Characters\\Cat1\\Character1.png",
+      "provider": "atlas-packer",
+      "registeredAt": "2026-08-23T22:18:49.383Z"
+    }
+  ]
+}

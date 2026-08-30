@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#1a3a6e" />
+    <title>Ironclad Rampage</title>
+  </head>
+  <body>
+    <main id="app">
+      <canvas id="game-canvas" aria-label="Ironclad Rampage game canvas"></canvas>
+
+      <section id="hud" aria-live="polite">
+        <div class="hp-block">
+          <div class="hp-label">
+            <span>Sir Clankalot</span>
+            <strong id="hp-text">120 / 120</strong>
+          </div>
+          <div class="hp-bar">
+            <div id="hp-fill"></div>
+          </div>
+        </div>
+        <div class="hud-metric">
+          <span>Score</span>
+          <strong id="score-value">0</strong>
+        </div>
+        <div class="hud-metric">
+          <span>Wave</span>
+          <strong id="wave-value">1/4</strong>
+        </div>
+        <div id="special-hint">Special K</div>
+        <div id="status-line">Loading...</div>
+      </section>
+
+      <div id="overlay">
+        <div class="overlay-card">
+          <p class="eyebrow">Medieval Beat 'Em Up</p>
+          <h1 id="overlay-title">Ironclad Rampage</h1>
+          <p id="overlay-body">Loading art...</p>
+          <button id="start-button" type="button">Start</button>
+        </div>
+      </div>
+
+      <div id="touch-controls" aria-hidden="true">
+        <div id="touch-stick">
+          <div id="touch-knob"></div>
+        </div>
+        <div id="action-buttons">
+          <button id="special-button" type="button">Special</button>
+          <button id="attack-button" type="button">Attack</button>
+        </div>
+      </div>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

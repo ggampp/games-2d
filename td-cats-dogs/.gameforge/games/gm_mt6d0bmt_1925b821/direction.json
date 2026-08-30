@@ -1,0 +1,10 @@
+{
+  "genreId": "tower-defense",
+  "artStyleId": "cel-shaded",
+  "tracks": [
+    "A",
+    "C",
+    "E",
+    "H"
+  ]
+}
