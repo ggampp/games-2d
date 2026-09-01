@@ -1,0 +1,90 @@
+
+skeleton.png
+size: 841,507
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Body
+  rotate: false
+  xy: 504, 267
+  size: 199, 238
+  orig: 199, 238
+  offset: 0, 0
+  index: -1
+Box
+  rotate: false
+  xy: 2, 5
+  size: 500, 500
+  orig: 500, 500
+  offset: 0, 0
+  index: -1
+Hand-B1
+  rotate: true
+  xy: 661, 2
+  size: 69, 81
+  orig: 69, 81
+  offset: 0, 0
+  index: -1
+Hand-B2
+  rotate: true
+  xy: 504, 14
+  size: 77, 155
+  orig: 77, 155
+  offset: 0, 0
+  index: -1
+Hand-F1
+  rotate: false
+  xy: 675, 138
+  size: 96, 99
+  orig: 96, 100
+  offset: 0, 1
+  index: -1
+Hand-F2
+  rotate: false
+  xy: 705, 313
+  size: 109, 192
+  orig: 109, 192
+  offset: 0, 0
+  index: -1
+Head
+  rotate: true
+  xy: 744, 4
+  size: 67, 73
+  orig: 101, 80
+  offset: 31, 3
+  index: -1
+Ice
+  rotate: false
+  xy: 504, 93
+  size: 169, 172
+  orig: 169, 172
+  offset: 0, 0
+  index: -1
+Leg-B
+  rotate: true
+  xy: 675, 73
+  size: 63, 95
+  orig: 63, 95
+  offset: 0, 0
+  index: -1
+Leg-F
+  rotate: true
+  xy: 705, 239
+  size: 72, 108
+  orig: 72, 108
+  offset: 0, 0
+  index: -1
+Poisoned
+  rotate: true
+  xy: 773, 159
+  size: 78, 66
+  orig: 78, 66
+  offset: 0, 0
+  index: -1
+shadow
+  rotate: true
+  xy: 816, 423
+  size: 82, 17
+  orig: 85, 17
+  offset: 1, 0
+  index: -1

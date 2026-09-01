@@ -1,0 +1,10 @@
+{
+  "name": "battle-of-heroes-workspace",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix game run dev",
+    "build": "npm --prefix game run build",
+    "preview": "npm --prefix game run preview",
+    "pack": "python game/tools/pack_sprites.py"
+  }
+}

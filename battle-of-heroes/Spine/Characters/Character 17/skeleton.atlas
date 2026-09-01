@@ -1,0 +1,104 @@
+
+skeleton.png
+size: 845,504
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Body
+  rotate: false
+  xy: 763, 345
+  size: 50, 57
+  orig: 50, 57
+  offset: 0, 0
+  index: -1
+Box
+  rotate: false
+  xy: 2, 2
+  size: 500, 500
+  orig: 500, 500
+  offset: 0, 0
+  index: -1
+Head
+  rotate: false
+  xy: 676, 35
+  size: 98, 88
+  orig: 98, 88
+  offset: 0, 0
+  index: -1
+Head.2
+  rotate: true
+  xy: 689, 404
+  size: 98, 88
+  orig: 98, 88
+  offset: 0, 0
+  index: -1
+Ice
+  rotate: true
+  xy: 504, 135
+  size: 169, 172
+  orig: 169, 172
+  offset: 0, 0
+  index: -1
+Leg-B
+  rotate: true
+  xy: 634, 23
+  size: 8, 27
+  orig: 8, 27
+  offset: 0, 0
+  index: -1
+Leg-F
+  rotate: false
+  xy: 663, 4
+  size: 8, 27
+  orig: 8, 27
+  offset: 0, 0
+  index: -1
+Poisoned
+  rotate: true
+  xy: 776, 45
+  size: 78, 66
+  orig: 78, 66
+  offset: 0, 0
+  index: -1
+Sm01
+  rotate: false
+  xy: 689, 338
+  size: 72, 64
+  orig: 72, 64
+  offset: 0, 0
+  index: -1
+Sm04
+  rotate: true
+  xy: 504, 9
+  size: 124, 128
+  orig: 124, 128
+  offset: 0, 0
+  index: -1
+Sm05
+  rotate: true
+  xy: 678, 125
+  size: 179, 165
+  orig: 179, 165
+  offset: 0, 0
+  index: -1
+Sm06
+  rotate: true
+  xy: 504, 306
+  size: 196, 183
+  orig: 196, 184
+  offset: 0, 1
+  index: -1
+Weapon
+  rotate: true
+  xy: 634, 33
+  size: 100, 40
+  orig: 101, 40
+  offset: 0, 0
+  index: -1
+shadow
+  rotate: false
+  xy: 676, 16
+  size: 82, 17
+  orig: 85, 17
+  offset: 1, 0
+  index: -1

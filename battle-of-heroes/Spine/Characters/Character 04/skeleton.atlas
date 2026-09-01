@@ -1,0 +1,160 @@
+
+skeleton.png
+size: 788,504
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Body
+  rotate: true
+  xy: 717, 170
+  size: 55, 67
+  orig: 55, 68
+  offset: 0, 1
+  index: -1
+Body-Snail
+  rotate: false
+  xy: 504, 398
+  size: 248, 104
+  orig: 248, 104
+  offset: 0, 0
+  index: -1
+Box
+  rotate: false
+  xy: 2, 2
+  size: 500, 500
+  orig: 500, 500
+  offset: 0, 0
+  index: -1
+EB-Snail-B
+  rotate: false
+  xy: 687, 173
+  size: 15, 8
+  orig: 15, 8
+  offset: 0, 0
+  index: -1
+EB-Snail-F
+  rotate: false
+  xy: 717, 88
+  size: 21, 12
+  orig: 21, 12
+  offset: 0, 0
+  index: -1
+Eye-2-Snail-B
+  rotate: false
+  xy: 754, 451
+  size: 32, 51
+  orig: 32, 51
+  offset: 0, 0
+  index: -1
+Eye-2-Snail-F
+  rotate: false
+  xy: 753, 104
+  size: 30, 64
+  orig: 30, 64
+  offset: 0, 0
+  index: -1
+Eye-Snail-B
+  rotate: false
+  xy: 754, 398
+  size: 32, 51
+  orig: 32, 51
+  offset: 0, 0
+  index: -1
+Eye-Snail-F
+  rotate: false
+  xy: 753, 38
+  size: 30, 64
+  orig: 30, 64
+  offset: 0, 0
+  index: -1
+Hand-1-B
+  rotate: false
+  xy: 673, 173
+  size: 12, 29
+  orig: 12, 29
+  offset: 0, 0
+  index: -1
+Hand-1-F
+  rotate: false
+  xy: 687, 183
+  size: 24, 19
+  orig: 24, 20
+  offset: 0, 1
+  index: -1
+Hand-2-B
+  rotate: true
+  xy: 504, 97
+  size: 299, 55
+  orig: 299, 55
+  offset: 0, 0
+  index: -1
+Hand-2-F
+  rotate: true
+  xy: 561, 355
+  size: 41, 47
+  orig: 41, 47
+  offset: 0, 0
+  index: -1
+Head
+  rotate: true
+  xy: 611, 4
+  size: 91, 104
+  orig: 91, 104
+  offset: 0, 0
+  index: -1
+Head-2
+  rotate: true
+  xy: 504, 3
+  size: 92, 105
+  orig: 115, 119
+  offset: 15, 14
+  index: -1
+Ice
+  rotate: true
+  xy: 611, 227
+  size: 169, 172
+  orig: 169, 172
+  offset: 0, 0
+  index: -1
+Leg-B
+  rotate: true
+  xy: 673, 204
+  size: 21, 40
+  orig: 21, 41
+  offset: 0, 1
+  index: -1
+Leg-F
+  rotate: true
+  xy: 561, 326
+  size: 27, 46
+  orig: 27, 46
+  offset: 0, 0
+  index: -1
+Poisoned
+  rotate: false
+  xy: 673, 102
+  size: 78, 66
+  orig: 78, 66
+  offset: 0, 0
+  index: -1
+Shell
+  rotate: true
+  xy: 561, 97
+  size: 128, 110
+  orig: 129, 110
+  offset: 0, 0
+  index: -1
+Smoke2
+  rotate: false
+  xy: 561, 279
+  size: 45, 45
+  orig: 45, 45
+  offset: 0, 0
+  index: -1
+shadow
+  rotate: true
+  xy: 717, 4
+  size: 82, 17
+  orig: 85, 17
+  offset: 1, 0
+  index: -1

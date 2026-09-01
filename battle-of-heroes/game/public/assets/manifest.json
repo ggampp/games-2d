@@ -1,0 +1,229 @@
+{
+  "characters": [
+    {
+      "key": "char01",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char02",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char03",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char04",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char05",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char06",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char07",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char08",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char09",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char10",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char11",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char12",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char13",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char14",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char15",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char16",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char17",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char18",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char19",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    },
+    {
+      "key": "char20",
+      "counts": {
+        "idle": 8,
+        "walk": 8,
+        "attack": 10,
+        "hit": 5,
+        "death": 8
+      },
+      "hitFrame": 5
+    }
+  ],
+  "fx": {
+    "fx01": 10,
+    "fx02": 18,
+    "fx03": 18
+  }
+}

@@ -1,0 +1,151 @@
+export interface StageDef {
+  id: number;
+  name: string;
+  bg: string;
+  sky: string;
+  enemyIds: number[];
+  enemyIncome: number;
+  enemyStartGold: number;
+  barracksHp: number;
+  playerIncome: number;
+  playerStartGold: number;
+  mapX: number;
+  mapY: number;
+}
+
+export const STAGES: StageDef[] = [
+  {
+    id: 1,
+    name: "Prado de Treino",
+    bg: "bg01",
+    sky: "sky01",
+    enemyIds: [13, 3, 11],
+    enemyIncome: 14,
+    enemyStartGold: 40,
+    barracksHp: 900,
+    playerIncome: 18,
+    playerStartGold: 80,
+    mapX: 0.17,
+    mapY: 0.78,
+  },
+  {
+    id: 2,
+    name: "Colinas Douradas",
+    bg: "bg02",
+    sky: "sky02",
+    enemyIds: [13, 3, 11, 19],
+    enemyIncome: 16,
+    enemyStartGold: 50,
+    barracksHp: 1100,
+    playerIncome: 18,
+    playerStartGold: 80,
+    mapX: 0.21,
+    mapY: 0.5,
+  },
+  {
+    id: 3,
+    name: "Muralha Cinza",
+    bg: "bg03",
+    sky: "sky03",
+    enemyIds: [14, 2, 10, 15],
+    enemyIncome: 18,
+    enemyStartGold: 60,
+    barracksHp: 1300,
+    playerIncome: 19,
+    playerStartGold: 90,
+    mapX: 0.22,
+    mapY: 0.26,
+  },
+  {
+    id: 4,
+    name: "Bosque Bruxo",
+    bg: "bg04",
+    sky: "sky04",
+    enemyIds: [8, 4, 5, 3],
+    enemyIncome: 20,
+    enemyStartGold: 70,
+    barracksHp: 1500,
+    playerIncome: 20,
+    playerStartGold: 90,
+    mapX: 0.4,
+    mapY: 0.44,
+  },
+  {
+    id: 5,
+    name: "Clareira Olímpica",
+    bg: "bg05",
+    sky: "sky05",
+    enemyIds: [6, 9, 1, 15],
+    enemyIncome: 22,
+    enemyStartGold: 80,
+    barracksHp: 1700,
+    playerIncome: 21,
+    playerStartGold: 100,
+    mapX: 0.52,
+    mapY: 0.55,
+  },
+  {
+    id: 6,
+    name: "Pântano do Barril",
+    bg: "bg06",
+    sky: "sky06",
+    enemyIds: [12, 7, 2, 4],
+    enemyIncome: 24,
+    enemyStartGold: 90,
+    barracksHp: 1900,
+    playerIncome: 22,
+    playerStartGold: 100,
+    mapX: 0.64,
+    mapY: 0.38,
+  },
+  {
+    id: 7,
+    name: "Fábrica Enferrujada",
+    bg: "bg07",
+    sky: "sky07",
+    enemyIds: [16, 18, 11, 8],
+    enemyIncome: 26,
+    enemyStartGold: 100,
+    barracksHp: 2100,
+    playerIncome: 23,
+    playerStartGold: 110,
+    mapX: 0.74,
+    mapY: 0.6,
+  },
+  {
+    id: 8,
+    name: "Fortaleza Ciclope",
+    bg: "bg08",
+    sky: "sky08",
+    enemyIds: [17, 20, 9, 7],
+    enemyIncome: 28,
+    enemyStartGold: 110,
+    barracksHp: 2400,
+    playerIncome: 24,
+    playerStartGold: 110,
+    mapX: 0.84,
+    mapY: 0.46,
+  },
+  {
+    id: 9,
+    name: "Castelo dos Heróis",
+    bg: "bg09",
+    sky: "sky09",
+    enemyIds: [20, 7, 17, 6, 13],
+    enemyIncome: 32,
+    enemyStartGold: 140,
+    barracksHp: 2800,
+    playerIncome: 25,
+    playerStartGold: 120,
+    mapX: 0.91,
+    mapY: 0.28,
+  },
+];
+
+export const BARRACKS_UPGRADE = [
+  { level: 1, hpBonus: 0, incomeBonus: 0, cost: 0 },
+  { level: 2, hpBonus: 200, incomeBonus: 3, cost: 220 },
+  { level: 3, hpBonus: 450, incomeBonus: 6, cost: 380 },
+  { level: 4, hpBonus: 750, incomeBonus: 10, cost: 560 },
+  { level: 5, hpBonus: 1100, incomeBonus: 15, cost: 820 },
+];

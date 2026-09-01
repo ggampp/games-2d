@@ -1,0 +1,132 @@
+
+skeleton.png
+size: 933,504
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+Body
+  rotate: true
+  xy: 678, 121
+  size: 111, 161
+  orig: 111, 161
+  offset: 0, 0
+  index: -1
+Box
+  rotate: false
+  xy: 2, 2
+  size: 500, 500
+  orig: 500, 500
+  offset: 0, 0
+  index: -1
+Ear-B
+  rotate: false
+  xy: 838, 235
+  size: 14, 12
+  orig: 14, 12
+  offset: 0, 0
+  index: -1
+Ear-F
+  rotate: true
+  xy: 759, 10
+  size: 12, 16
+  orig: 13, 16
+  offset: 0, 0
+  index: -1
+Hand-B
+  rotate: false
+  xy: 838, 285
+  size: 78, 106
+  orig: 78, 106
+  offset: 0, 0
+  index: -1
+Hand-F
+  rotate: true
+  xy: 789, 55
+  size: 64, 133
+  orig: 64, 133
+  offset: 0, 0
+  index: -1
+Head
+  rotate: true
+  xy: 678, 24
+  size: 95, 109
+  orig: 106, 109
+  offset: 0, 0
+  index: -1
+Head-2
+  rotate: false
+  xy: 838, 393
+  size: 93, 109
+  orig: 106, 109
+  offset: 0, 0
+  index: -1
+Ice
+  rotate: true
+  xy: 504, 63
+  size: 169, 172
+  orig: 169, 172
+  offset: 0, 0
+  index: -1
+Leg-B
+  rotate: false
+  xy: 650, 10
+  size: 23, 51
+  orig: 23, 51
+  offset: 0, 0
+  index: -1
+Leg-F
+  rotate: true
+  xy: 841, 130
+  size: 23, 51
+  orig: 23, 51
+  offset: 0, 0
+  index: -1
+Poisoned
+  rotate: true
+  xy: 841, 155
+  size: 78, 66
+  orig: 78, 66
+  offset: 0, 0
+  index: -1
+Smoke1
+  rotate: false
+  xy: 504, 3
+  size: 144, 58
+  orig: 146, 58
+  offset: 2, 0
+  index: -1
+Smoke2
+  rotate: false
+  xy: 789, 8
+  size: 45, 45
+  orig: 45, 45
+  offset: 0, 0
+  index: -1
+Splash
+  rotate: true
+  xy: 504, 234
+  size: 268, 165
+  orig: 268, 165
+  offset: 0, 0
+  index: -1
+Splash2
+  rotate: true
+  xy: 671, 234
+  size: 268, 165
+  orig: 268, 165
+  offset: 0, 0
+  index: -1
+Tail
+  rotate: false
+  xy: 838, 249
+  size: 61, 34
+  orig: 61, 34
+  offset: 0, 0
+  index: -1
+shadow
+  rotate: false
+  xy: 675, 5
+  size: 82, 17
+  orig: 85, 17
+  offset: 1, 0
+  index: -1
