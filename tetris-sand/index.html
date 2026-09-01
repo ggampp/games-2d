@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#070913">
+  <meta name="description" content="Sand Tetris (Sandtrix) - Falling sand physics puzzle game with power-ups, retro synth audio and neon graphics.">
+  <title>Sand Tetris (Sandtrix) - Ultimate Edition</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <!-- Optional CRT Scanline Shader Overlay -->
+  <div id="crt-overlay" class="crt-overlay"></div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <div id="app">
+    <!-- Header / Top Bar -->
+    <header class="game-header">
+      <div class="brand">
+        <span class="logo-icon">⏳</span>
+        <h1 class="logo-text">SAND <span class="highlight">TETRIS</span></h1>
+      </div>
+      <div class="header-actions">
+        <button id="btn-crt-toggle" class="icon-btn" title="Alternar Filtro CRT">📺</button>
+        <button id="btn-achievements-top" class="icon-btn" title="Conquistas">🏆</button>
+        <button id="btn-sound-toggle" class="icon-btn" title="Alternar Som">🔊</button>
+        <button id="btn-pause-toggle" class="icon-btn" title="Pausar (P)">⏸️</button>
+        <button id="btn-restart-game" class="icon-btn" title="Reiniciar (R)">🔄</button>
+      </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="game-layout">
+      <!-- Left Panel: HOLD & Stats -->
+      <aside class="side-panel left-panel">
+        <!-- HOLD BOX -->
+        <div class="hud-card hold-card">
+          <div class="card-header">
+            <span class="card-title">HOLD</span>
+            <span class="key-hint">C / Shift</span>
+          </div>
+          <div class="canvas-box">
+            <canvas id="hold-canvas" width="80" height="80"></canvas>
+          </div>
+        </div>
+
+        <!-- STATS BOX -->
+        <div class="hud-card stats-card">
+          <div class="stat-item">
+            <span class="stat-label">PONTOS</span>
+            <span id="hud-score" class="stat-val stat-glow">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">RECORD</span>
+            <span id="hud-high-score" class="stat-val highlight">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">NÍVEL</span>
+            <span id="hud-level" class="stat-val">1</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">LINHAS</span>
+            <span id="hud-lines" class="stat-val">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">PEÇAS (PROX: 50)</span>
+            <span id="hud-pieces" class="stat-val highlight-pieces">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">GRÃOS LIMPOS</span>
+            <span id="hud-grains" class="stat-val highlight-grains">0</span>
+          </div>
+          <div id="hud-timer-container" class="stat-item timer-item" style="display: none;">
+            <span class="stat-label">TEMPO</span>
+            <span id="hud-timer" class="stat-val timer-val">2:00</span>
+          </div>
+          <div id="hud-wind" class="stat-item wind-badge" style="display: none;">
+            💨 Vento: Calmo
+          </div>
+        </div>
+
+        <!-- THEME SELECTOR -->
+        <div class="hud-card theme-card">
+          <label for="theme-select" class="card-title">TEMA VISUAL</label>
+          <select id="theme-select" class="styled-select">
+            <option value="neon">Cyber Neon</option>
+            <option value="vaporwave">Vaporwave 80s</option>
+            <option value="sahara">Sahara Dunes</option>
+            <option value="gemstones">Gemstones</option>
+            <option value="sunset">Sunset Dunes</option>
+            <option value="pastel">Pastel Dream</option>
+          </select>
+        </div>
+      </aside>
+
+      <!-- Center: Canvas Arena -->
+      <section class="arena-container">
+        <!-- Combo floating badge -->
+        <div id="hud-combo-badge" class="combo-badge">
+          <span id="hud-combo-text">COMBO x2</span>
+        </div>
+
+        <div class="canvas-wrapper">
+          <canvas id="game-canvas" width="300" height="600"></canvas>
+        </div>
+      </section>
+
+      <!-- Right Panel: NEXT Queue & Controls Help -->
+      <aside class="side-panel right-panel">
+        <!-- NEXT QUEUE -->
+        <div class="hud-card next-card">
+          <div class="card-header">
+            <span class="card-title">NEXT</span>
+          </div>
+          <div class="next-previews">
+            <div class="canvas-box mini-box">
+              <canvas id="next-1-canvas" width="70" height="70"></canvas>
+            </div>
+            <div class="canvas-box mini-box secondary">
+              <canvas id="next-2-canvas" width="60" height="60"></canvas>
+            </div>
+            <div class="canvas-box mini-box tertiary">
+              <canvas id="next-3-canvas" width="50" height="50"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTROLS GUIDE -->
+        <div class="hud-card controls-card">
+          <div class="card-title">CONTROLES</div>
+          <ul class="controls-list">
+            <li><kbd>←</kbd> <kbd>→</kbd> Mover</li>
+            <li><kbd>↑</kbd> / <kbd>X</kbd> Girar Horário</li>
+            <li><kbd>Z</kbd> Girar Anti-Horário</li>
+            <li><kbd>↓</kbd> Queda Rápida</li>
+            <li><kbd>Espaço</kbd> Hard Drop</li>
+            <li><kbd>C</kbd> / <kbd>Shift</kbd> Guardar (Hold)</li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Mobile Virtual Touch Controls -->
+    <div id="mobile-controls" class="mobile-controls">
+      <div class="touch-cluster touch-left">
+        <button id="btn-left" class="touch-btn">◀</button>
+        <button id="btn-down" class="touch-btn">▼</button>
+        <button id="btn-right" class="touch-btn">▶</button>
+      </div>
+      <div class="touch-cluster touch-center">
+        <button id="btn-hold" class="touch-btn btn-pill">HOLD</button>
+        <button id="btn-hard-drop" class="touch-btn btn-hard">DROP</button>
+      </div>
+      <div class="touch-cluster touch-right">
+        <button id="btn-rotate-ccw" class="touch-btn btn-action">↺</button>
+        <button id="btn-rotate-cw" class="touch-btn btn-action primary">↻</button>
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- START / MAIN MENU MODAL -->
+    <div id="modal-menu" class="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-icon">⏳</div>
+          <h2>SAND TETRIS</h2>
+          <p class="subtitle">Quando os blocos caem, eles viram areia. Ligue cores de ponta a ponta para limpar!</p>
+        </div>
+        <div class="modal-modes">
+          <button class="btn-mode primary" data-mode="CLASSIC">
+            <span class="mode-name">🏆 Modo Clássico</span>
+            <span class="mode-desc">Velocidade crescente, power-ups especiais e combos em cascata.</span>
+          </button>
+          <button class="btn-mode" data-mode="PUZZLE_MENU">
+            <span class="mode-name">🧩 Modo Puzzle / Desafio</span>
+            <span class="mode-desc">10 fases artesanais com peças limitadas para limpar a areia.</span>
+          </button>
+          <button class="btn-mode" data-mode="CHAOS">
+            <span class="mode-name">🌪️ Modo Caos & Vento</span>
+            <span class="mode-desc">Rajadas dinâmicas de vento e física imprevisível de dunas.</span>
+          </button>
+          <button class="btn-mode" data-mode="SPRINT">
+            <span class="mode-name">⚡ Sprint 2 Minutos</span>
+            <span class="mode-desc">Desafio contra o relógio: marque o máximo antes do tempo acabar.</span>
+          </button>
+          <button class="btn-mode" data-mode="ZEN">
+            <span class="mode-name">🌸 Modo Zen</span>
+            <span class="mode-desc">Sem Game Over. Sandbox relaxante observando a fluidez da areia.</span>
+          </button>
+        </div>
+        <button id="btn-menu-achievements" class="btn-secondary">🏆 Ver Conquistas Desbloqueadas</button>
+      </div>
+    </div>
+
+    <!-- PUZZLE SELECT MODAL -->
+    <div id="modal-puzzle" class="modal-backdrop hidden">
+      <div class="modal-card puzzle-modal-card">
+        <h2>🧩 DESAFIOS PUZZLE</h2>
+        <p class="subtitle">Escolha um desafio e resolva o tabuleiro com as peças fornecidas:</p>
+        <div id="puzzle-grid" class="puzzle-grid"></div>
+        <div class="modal-buttons">
+          <button id="btn-close-puzzle" class="btn-secondary">Voltar ao Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACHIEVEMENTS MODAL -->
+    <div id="modal-achievements" class="modal-backdrop hidden">
+      <div class="modal-card achievements-modal-card">
+        <h2>🏆 CONQUISTAS</h2>
+        <p class="subtitle">Medalhas e troféus desbloqueados durante sua jornada:</p>
+        <div id="achievements-list" class="achievements-list"></div>
+        <div class="modal-buttons">
+          <button id="btn-close-achievements" class="btn-secondary">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAUSE MODAL -->
+    <div id="modal-pause" class="modal-backdrop hidden">
+      <div class="modal-card mini-card">
+        <h2>JOGO PAUSADO</h2>
+        <div class="modal-buttons">
+          <button id="btn-resume" class="btn-primary">Continuar (P)</button>
+          <button id="btn-restart-pause" class="btn-secondary">Reiniciar Jogo</button>
+          <button id="btn-menu-pause" class="btn-secondary">Menu Principal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME OVER MODAL -->
+    <div id="modal-gameover" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <h2 class="gameover-title">FIM DE JOGO</h2>
+        <div class="gameover-stats">
+          <div class="go-stat">
+            <span>Pontuação Final</span>
+            <strong id="gameover-score">0</strong>
+          </div>
+          <div class="go-stat">
+            <span>Melhor Record</span>
+            <strong id="gameover-highscore">0</strong>
+          </div>
+          <div class="go-stat">
+            <span>Grãos Dissolvidos</span>
+            <strong id="gameover-grains">0</strong>
+          </div>
+          <div class="go-stat">
+            <span>Maior Combo</span>
+            <strong id="gameover-maxcombo">x1</strong>
+          </div>
+        </div>
+        <div class="modal-buttons">
+          <button id="btn-play-again" class="btn-primary">Jogar Novamente (Espaço)</button>
+          <button id="btn-menu-gameover" class="btn-secondary">Menu de Modos</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

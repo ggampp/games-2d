@@ -1,0 +1,21 @@
+{
+  "name": "Sand Tetris (Sandtrix)",
+  "short_name": "SandTetris",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070913",
+  "theme_color": "#00f0ff",
+  "description": "Falling sand physics Tetris puzzle game with power-ups and synth music.",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/vite.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
