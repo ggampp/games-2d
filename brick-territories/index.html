@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ece9e1" />
+    <title>Brick Territories | Simulação Interativa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="stage">
+      <header class="masthead">
+        <div class="brand">
+          <h1>Brick Territories</h1>
+          <span class="badge" id="total-balls-badge">12 bolinhas</span>
+        </div>
+
+        <!-- Mini Leaderboard preview -->
+        <div class="leaderboard-wrap" id="leaderboard-wrap" title="Territórios dominantes">
+          <span class="leader-title">Top 3:</span>
+          <div class="leaderboard-list" id="leaderboard-list"></div>
+        </div>
+
+        <div class="status-group">
+          <div class="status" aria-live="polite">
+            <span><i class="status-dot"></i><b id="status-text">rodando</b></span>
+            <span id="elapsed">00:00</span>
+            <span id="fps-val" class="fps-badge">60 FPS</span>
+          </div>
+
+          <div class="header-actions">
+            <button class="icon-btn" id="sound-toggle" type="button" title="Ligar/Desligar Som">
+              <span class="sound-icon">🔇</span>
+              <span class="sound-label">Som</span>
+            </button>
+            <button class="icon-btn" id="theme-toggle" type="button" title="Alternar Modo Escuro / Claro">
+              🌙 Escuro
+            </button>
+            <button class="icon-btn" id="screenshot-btn" type="button" title="Salvar Imagem PNG">
+              📸 Salvar
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Live Dominance Bar -->
+      <div class="dominance-wrapper" title="Distribuição de Territórios em Tempo Real">
+        <div class="dominance-bar" id="dominance-bar"></div>
+      </div>
+
+      <!-- Color Brush Toolbar -->
+      <div class="brush-toolbar" id="brush-toolbar">
+        <div class="brush-info">
+          <span class="brush-title">🖌️ Pincel de Conquista:</span>
+          <span class="brush-selected-desc" id="brush-selected-label">🎲 Aleatório</span>
+        </div>
+        <div class="color-chips-wrapper">
+          <div class="color-chips" id="color-chips"></div>
+        </div>
+        <div class="brush-radius-group">
+          <span class="brush-radius-label">Tamanho:</span>
+          <button type="button" class="radius-btn active" data-radius="2" title="Raio Pequeno (3x3 blocos)">P</button>
+          <button type="button" class="radius-btn" data-radius="4" title="Raio Médio (7x7 blocos)">M</button>
+          <button type="button" class="radius-btn" data-radius="7" title="Raio Grande (13x13 blocos)">G</button>
+        </div>
+      </div>
+
+      <section class="frame" aria-label="Simulação de Territórios de Tijolos">
+        <canvas id="world"></canvas>
+        <button class="pause-button" id="pause" type="button" aria-label="Pausar simulação">
+          <span class="pause-icon" aria-hidden="true"></span>
+          <span id="pause-label">pausar</span>
+        </button>
+      </section>
+
+      <form class="controls" id="controls">
+        <!-- 1. Territórios / Cores -->
+        <div class="control">
+          <div class="control-label">
+            <label for="players">Territórios / Cores</label>
+            <output id="players-value">12</output>
+          </div>
+          <input id="players" name="players" type="range" min="2" max="32" value="12" step="1" />
+        </div>
+
+        <!-- 2. Bolinhas por Território -->
+        <div class="control">
+          <div class="control-label">
+            <label for="ballsPerPlayer">Bolinhas por Cor</label>
+            <output id="ballsPerPlayer-value">1</output>
+          </div>
+          <input id="ballsPerPlayer" name="ballsPerPlayer" type="range" min="1" max="8" value="1" step="1" />
+        </div>
+
+        <!-- 3. Velocidade das Bolinhas -->
+        <div class="control">
+          <div class="control-label">
+            <label for="speed">Velocidade</label>
+            <output id="speed-value">1.7x</output>
+          </div>
+          <input id="speed" name="speed" type="range" min="0.2" max="5.0" value="1.7" step="0.1" />
+        </div>
+
+        <!-- 4. Tamanho dos Tijolos -->
+        <div class="control">
+          <div class="control-label">
+            <label for="brick">Tamanho do Bloco</label>
+            <output id="brick-value">20</output>
+          </div>
+          <input id="brick" name="brick" type="range" min="7" max="32" value="20" step="1" />
+        </div>
+
+        <!-- 5. Tamanho da Bolinha -->
+        <div class="control">
+          <div class="control-label">
+            <label for="radius">Tamanho da Bola</label>
+            <output id="radius-value">0.55</output>
+          </div>
+          <input id="radius" name="radius" type="range" min="0.30" max="0.95" value="0.55" step="0.05" />
+        </div>
+
+        <!-- 6. Paleta de Cores -->
+        <div class="control select-control">
+          <div class="control-label">
+            <label for="paletteSelect">Estilo de Cores</label>
+          </div>
+          <select id="paletteSelect" name="paletteSelect" class="palette-select">
+            <option value="classic" selected>🎨 Clássico Bleuje</option>
+            <option value="cyberpunk">⚡ Neon Cyberpunk</option>
+            <option value="pastel">🌸 Pastel Elegante</option>
+            <option value="solar">🔥 Solar / Fogo</option>
+            <option value="forest">🌲 Oceano & Floresta</option>
+          </select>
+        </div>
+
+        <!-- 7. Seed + Dado Aleatório -->
+        <div class="control seed-control">
+          <div class="control-label">
+            <label for="seed">Seed Aleatória</label>
+            <div class="seed-action-wrap">
+              <output id="seed-value">284</output>
+              <button type="button" class="dice-btn" id="random-seed-btn" title="Gerar Seed Aleatória">🎲</button>
+            </div>
+          </div>
+          <input id="seed" name="seed" type="range" min="1" max="999" value="284" step="1" />
+        </div>
+
+        <!-- Botão Reset / Reiniciar -->
+        <button class="reset-button" id="reset" type="submit">
+          <span>Novo Jogo</span><span aria-hidden="true">↻</span>
+        </button>
+      </form>
+
+      <footer class="footer-info">
+        <div class="footer-hint">
+          <span>💡 <b>Dica:</b> Pressione <kbd>Espaço</kbd> para pausar/despausar, <kbd>R</kbd> para reiniciar, ou clique no grid para causar uma explosão de conquista!</span>
+        </div>
+        <div class="footer-credit">
+          <span>Baseado no conceito original de <b>Étienne Jacob (@etiennejcb)</b></span>
+        </div>
+      </footer>
+    </main>
+
+    <script src="audio.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
