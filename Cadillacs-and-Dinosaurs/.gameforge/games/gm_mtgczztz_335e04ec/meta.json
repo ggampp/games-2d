@@ -1,0 +1,15 @@
+{
+  "gameId": "gm_mtgczztz_335e04ec",
+  "kind": "folder",
+  "title": "Sauria Riot",
+  "source": "D:\\claude_projects\\dev-games\\games-2d\\Cadillacs-and-Dinosaurs",
+  "createdAt": "2026-08-30T22:06:31.479Z",
+  "updatedAt": "2026-08-30T22:06:31.479Z",
+  "genreId": "arcade-action",
+  "engine": "unknown",
+  "paths": {
+    "meta": ".gameforge\\games\\gm_mtgczztz_335e04ec\\meta.json",
+    "extract": ".gameforge\\games\\gm_mtgczztz_335e04ec\\extract.json",
+    "systems": ".gameforge\\games\\gm_mtgczztz_335e04ec\\systems\\index.json"
+  }
+}

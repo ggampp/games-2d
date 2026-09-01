@@ -1,0 +1,65 @@
+{
+  "gameId": "gm_mtgczztz_335e04ec",
+  "kind": "folder",
+  "title": "Sauria Riot",
+  "source": "D:\\claude_projects\\dev-games\\games-2d\\Cadillacs-and-Dinosaurs",
+  "engine": "unknown",
+  "classified": {
+    "genre": {
+      "id": "arcade-action",
+      "name": "Arcade action",
+      "score": 2,
+      "reasons": [
+        "alias:arcade"
+      ]
+    },
+    "alternatives": [
+      {
+        "id": "fighting",
+        "name": "Fighting",
+        "score": 2,
+        "reasons": [
+          "alias:brawler"
+        ]
+      },
+      {
+        "id": "endless-runner",
+        "name": "Endless runner",
+        "score": 0,
+        "reasons": []
+      },
+      {
+        "id": "platformer",
+        "name": "Platformer",
+        "score": 0,
+        "reasons": []
+      }
+    ],
+    "artStyle": {
+      "id": "pixel",
+      "name": "Pixel art",
+      "score": 5,
+      "reasons": [
+        "alias:pixel",
+        "id:pixel"
+      ]
+    },
+    "artAlternatives": [
+      {
+        "id": "low-poly",
+        "name": "Low poly stylized",
+        "score": 0,
+        "reasons": []
+      },
+      {
+        "id": "pbr-realistic",
+        "name": "PBR semi-realista",
+        "score": 0,
+        "reasons": []
+      }
+    ],
+    "confidence": 0.2,
+    "textUsed": "Original 2D arcade beat-em-up (NOT a Cadillacs and Dinosaurs clone of art/names). Title: Sauria Riot. Setting: 2194 rust-belt megacity Yucca Prime after Helix Dominion gene-vault disaster released engineered saurians. Four original bounty riders fight street thugs and dinosaurs in a side-scrolling 2.5D plane (X + depth Z). Characters: Rook Hale (heavy brawler), Vesper Kane (fast knife striker), To"
+  },
+  "systems": []
+}

@@ -1,0 +1,65 @@
+{
+  "gameId": "gm_mtgczztz_335e04ec",
+  "categories": {
+    "artDirection": {
+      "score": 0,
+      "evidence": "heuristic from extracted files",
+      "verified": false
+    },
+    "hero": {
+      "score": 0,
+      "evidence": "no player entity found",
+      "verified": false
+    },
+    "obstacles": {
+      "score": 0,
+      "evidence": "heuristic",
+      "verified": false
+    },
+    "rewards": {
+      "score": 0,
+      "evidence": "unverified",
+      "verified": false
+    },
+    "world": {
+      "score": 0,
+      "evidence": "engine=unknown",
+      "verified": false
+    },
+    "materials": {
+      "score": 0,
+      "evidence": "unverified",
+      "verified": false
+    },
+    "lighting": {
+      "score": 0,
+      "evidence": "unverified",
+      "verified": false
+    },
+    "vfx": {
+      "score": 0,
+      "evidence": "unverified",
+      "verified": false
+    },
+    "ui": {
+      "score": 0,
+      "evidence": "no HUD files",
+      "verified": false
+    },
+    "performance": {
+      "score": 0,
+      "evidence": "browser QA not run",
+      "verified": false
+    }
+  },
+  "average": 0,
+  "automaticFailures": [
+    "Hero is primitive or missing",
+    "World is empty/flat",
+    "HUD is debug or missing",
+    "No performance evidence"
+  ],
+  "premiumEligible": false,
+  "showcaseEligible": false,
+  "verified": false
+}

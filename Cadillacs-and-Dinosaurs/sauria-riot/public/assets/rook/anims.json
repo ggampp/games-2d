@@ -1,0 +1,126 @@
+{
+  "source": "D:\\claude_projects\\dev-games\\games-2d\\Cadillacs-and-Dinosaurs\\sauria-riot\\moviments\\rook_moviment.mp4",
+  "fps_src": 12,
+  "cell": [
+    144,
+    176
+  ],
+  "clips": {
+    "idle": {
+      "file": "idle.png",
+      "frames": 8,
+      "frameWidth": 144,
+      "frameHeight": 176,
+      "fps": 8,
+      "loop": true,
+      "sourceIndices": [
+        4,
+        5,
+        7,
+        8,
+        10,
+        11,
+        13,
+        14
+      ]
+    },
+    "walk": {
+      "file": "walk.png",
+      "frames": 10,
+      "frameWidth": 144,
+      "frameHeight": 176,
+      "fps": 10,
+      "loop": true,
+      "sourceIndices": [
+        22,
+        25,
+        28,
+        31,
+        34,
+        37,
+        40,
+        43,
+        46,
+        49
+      ]
+    },
+    "punch": {
+      "file": "punch.png",
+      "frames": 8,
+      "frameWidth": 144,
+      "frameHeight": 176,
+      "fps": 14,
+      "loop": false,
+      "sourceIndices": [
+        62,
+        65,
+        69,
+        72,
+        75,
+        78,
+        82,
+        85
+      ]
+    },
+    "run": {
+      "file": "run.png",
+      "frames": 8,
+      "frameWidth": 144,
+      "frameHeight": 176,
+      "fps": 12,
+      "loop": true,
+      "sourceIndices": [
+        103,
+        106,
+        108,
+        111,
+        113,
+        116,
+        118,
+        121
+      ]
+    },
+    "punch2": {
+      "file": "punch2.png",
+      "frames": 8,
+      "frameWidth": 144,
+      "frameHeight": 176,
+      "fps": 14,
+      "loop": false,
+      "sourceIndices": [
+        139,
+        143,
+        147,
+        151,
+        154,
+        158,
+        162,
+        166
+      ]
+    },
+    "jump": {
+      "file": "jump.png",
+      "frames": 6,
+      "frameWidth": 144,
+      "frameHeight": 176,
+      "fps": 12,
+      "loop": false,
+      "sourceIndices": [
+        103,
+        108,
+        111,
+        113,
+        116,
+        118
+      ]
+    },
+    "down": {
+      "file": "down.png",
+      "frames": 1,
+      "frameWidth": 144,
+      "frameHeight": 176,
+      "fps": 1,
+      "loop": false
+    }
+  }
+}
