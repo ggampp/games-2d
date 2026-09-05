@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PRANCHA — O vão não perdoa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&family=IBM+Plex+Mono:wght@400;600&family=Oswald:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="stage">
+      <canvas id="game" width="1600" height="900"></canvas>
+
+      <button id="btn-mute" class="mute" type="button" title="Som (M)">SOM ON</button>
+
+      <!-- 1. Menu -->
+      <section id="screen-menu" class="screen is-on">
+        <div class="stamp-block crea">
+          <div>CREA-SC</div>
+          <small>REV 02 · ESC 1:200</small>
+        </div>
+        <div class="menu-core">
+          <p class="eyebrow">INFRAESTRUTURA VIÁRIA · PONTES E VIADUTOS</p>
+          <h1>PRANCHA</h1>
+          <p class="tagline">O VÃO NÃO PERDOA</p>
+          <nav class="menu-nav">
+            <button id="btn-new" class="menu-item" type="button">+ CADERNO DE OBRAS</button>
+            <button id="btn-continue" class="menu-item" type="button" disabled>CONTINUAR PROJETO</button>
+            <button id="btn-sandbox" class="menu-item" type="button">SANDBOX</button>
+            <button id="btn-gallery" class="menu-item" type="button">GALERIA AS-BUILT</button>
+          </nav>
+        </div>
+        <div class="title-block">
+          <div>PROJETO: PRANCHA</div>
+          <div>DISCIPLINA: PONTES</div>
+          <div id="menu-progress">ESTRELAS: 0 / 72</div>
+        </div>
+      </section>
+
+      <!-- 2. Caderno de obras -->
+      <section id="screen-caderno" class="screen">
+        <article class="caderno">
+          <header>
+            <h2>CADERNO DE OBRAS</h2>
+            <p class="memorial-name">SELEÇÃO DE CAMPANHA · REGIÃO SUL DO BRASIL</p>
+          </header>
+          <div class="caderno-body">
+            <nav id="biome-tabs" class="biome-tabs"></nav>
+            <div class="biome-panel">
+              <h3 id="biome-name"></h3>
+              <p id="biome-sub" class="teach"></p>
+              <div id="level-list" class="level-list"></div>
+              <div class="biome-progress"><div id="biome-bar"></div></div>
+            </div>
+          </div>
+          <footer>
+            <button id="btn-caderno-back" class="stamp-btn ghost" type="button">VOLTAR</button>
+          </footer>
+        </article>
+      </section>
+
+      <!-- 3. Memorial descritivo -->
+      <section id="screen-briefing" class="screen">
+        <article class="memorial">
+          <header>
+            <h2 id="brief-title">MEMORIAL DESCRITIVO</h2>
+            <p id="brief-name" class="memorial-name"></p>
+          </header>
+          <div class="cards">
+            <div class="card"><span>VÃO</span><strong id="brief-span">14,00 m</strong></div>
+            <div class="card"><span>CARGA</span><strong id="brief-load">Van 3 t</strong></div>
+            <div class="card"><span>ORÇAMENTO</span><strong id="brief-budget">R$ 0</strong></div>
+            <div class="card"><span>RESTRIÇÃO</span><strong id="brief-note">—</strong></div>
+          </div>
+          <ul id="brief-mods" class="chips"></ul>
+          <p class="teach">Aula desta obra: <em id="brief-teach"></em></p>
+          <p id="brief-saved" class="teach saved"></p>
+          <footer>
+            <button id="btn-back-menu" class="stamp-btn ghost" type="button">DEVOLVER EDITAL</button>
+            <button id="btn-start-project" class="stamp-btn" type="button">INICIAR PROJETO</button>
+          </footer>
+        </article>
+      </section>
+
+      <!-- 4/5. Construir / Ensaio -->
+      <section id="screen-play" class="screen hud">
+        <header class="topbar">
+          <div class="brand">PRANCHA</div>
+          <div id="hud-level" class="level-name">OBRA 01</div>
+          <div class="stats">
+            <div class="stat"><span>CUSTO</span><strong id="hud-cost">R$ 0</strong></div>
+            <div class="stat"><span>ORÇAMENTO</span><strong id="hud-budget">R$ 0</strong></div>
+            <div class="stat"><span>VÃO</span><strong id="hud-span">14,00 m</strong></div>
+            <div class="stat"><span>FS</span><strong id="hud-fs">—</strong></div>
+            <div class="stat" id="hud-wind-box"><span>VENTO</span><strong id="hud-wind">—</strong></div>
+          </div>
+        </header>
+        <aside id="toolbox" class="toolbox"></aside>
+        <div id="hud-phase" class="phase"></div>
+        <p id="hud-hint" class="hint"></p>
+        <p class="keys">arrastar: peça · dir.: apagar · 1–5: material · Ctrl+Z: desfazer · T: ensaio · Esc: caderno</p>
+        <footer class="bottombar">
+          <div id="build-actions" class="row is-on">
+            <button id="btn-exit" class="stamp-btn ghost" type="button">CADERNO</button>
+            <button id="btn-undo" class="stamp-btn ghost" type="button">DESFAZER</button>
+            <button id="btn-clear" class="stamp-btn ghost" type="button">LIMPAR VÃO</button>
+            <button id="btn-test" class="stamp-btn is-pulse" type="button">TESTAR CARGA</button>
+          </div>
+          <div id="test-actions" class="row">
+            <button id="btn-pause" class="stamp-btn ghost" type="button">VOLTAR AO PROJETO</button>
+            <button id="btn-restart-test" class="stamp-btn ghost" type="button">REINICIAR ENSAIO</button>
+          </div>
+        </footer>
+      </section>
+
+      <!-- 6. Colapso -->
+      <section id="screen-collapse" class="screen">
+        <article class="laudo fail">
+          <div class="rubber">COLAPSO ESTRUTURAL</div>
+          <p>FATOR DE SEGURANÇA <strong id="fail-fs">0.00</strong></p>
+          <p class="mode" id="fail-mode"></p>
+          <ul id="fail-list"></ul>
+          <footer>
+            <button id="btn-fail-report" class="stamp-btn ghost" type="button">RELATÓRIO</button>
+            <button id="btn-fail-retry" class="stamp-btn" type="button">TESTAR REFORÇO</button>
+          </footer>
+        </article>
+      </section>
+
+      <!-- 7. Relatório -->
+      <section id="screen-report" class="screen">
+        <article class="laudo">
+          <h2 id="rep-title">RELATÓRIO DE ENSAIO</h2>
+          <div id="rep-stars" class="stars"></div>
+          <table>
+            <tr><th>Material</th><td id="rep-material"></td></tr>
+            <tr><th>Fundações</th><td id="rep-foundations"></td></tr>
+            <tr><th>Mão de obra (18%)</th><td id="rep-labor"></td></tr>
+            <tr><th>Custo realizado</th><td id="rep-spent"></td></tr>
+            <tr><th>Orçamento</th><td id="rep-budget"></td></tr>
+            <tr><th>Variação</th><td id="rep-delta"></td></tr>
+            <tr><th>Fator de segurança</th><td id="rep-fs"></td></tr>
+            <tr><th>Flecha</th><td id="rep-flecha"></td></tr>
+          </table>
+          <p id="rep-note" class="teach"></p>
+          <footer>
+            <button id="btn-rep-caderno" class="stamp-btn ghost" type="button">CADERNO</button>
+            <button id="btn-revistar" class="stamp-btn ghost" type="button">REVISAR PROJETO</button>
+            <button id="btn-next" class="stamp-btn" type="button">PRÓXIMA OBRA</button>
+          </footer>
+        </article>
+      </section>
+
+      <!-- 8. Sandbox -->
+      <section id="screen-sandbox" class="screen">
+        <article class="memorial">
+          <header>
+            <h2>SANDBOX · EDITAL LIVRE</h2>
+            <p class="memorial-name">DEFINA O TERRENO E A CARGA. ORÇAMENTO ILIMITADO.</p>
+          </header>
+          <div class="form">
+            <label>BIOMA
+              <select id="sb-biome">
+                <option value="plains">Planície</option>
+                <option value="canyon">Canyon</option>
+                <option value="estuary">Estuário</option>
+                <option value="serra">Serra</option>
+                <option value="mangrove">Mangue</option>
+                <option value="urban">Urbano</option>
+              </select>
+            </label>
+            <label>VÃO (m) <output id="sb-span-out">24</output>
+              <input id="sb-span" type="range" min="10" max="60" step="2" value="24" />
+            </label>
+            <label>VEÍCULO
+              <select id="sb-vehicle">
+                <option value="van">Van</option>
+                <option value="truck" selected>Caminhão</option>
+                <option value="bus">Ônibus</option>
+                <option value="bitrem">Bitrem</option>
+              </select>
+            </label>
+            <label>CARGA (t) <output id="sb-load-out">12</output>
+              <input id="sb-load" type="range" min="1" max="60" step="1" value="12" />
+            </label>
+            <label>VENTO (km/h) <output id="sb-wind-out">0</output>
+              <input id="sb-wind" type="range" min="0" max="120" step="10" value="0" />
+            </label>
+            <label>MARÉ (m) <output id="sb-tide-out">0</output>
+              <input id="sb-tide" type="range" min="0" max="4" step="0.5" value="0" />
+            </label>
+            <label class="check"><input id="sb-piers" type="checkbox" checked /> PILARES NO LEITO PERMITIDOS</label>
+          </div>
+          <footer>
+            <button id="btn-sb-back" class="stamp-btn ghost" type="button">VOLTAR</button>
+            <button id="btn-sb-start" class="stamp-btn" type="button">ABRIR CANTEIRO</button>
+          </footer>
+        </article>
+      </section>
+
+      <!-- 9. Galeria -->
+      <section id="screen-gallery" class="screen">
+        <article class="laudo gallery">
+          <h2>GALERIA AS-BUILT</h2>
+          <p id="gal-summary" class="memorial-name"></p>
+          <div class="gal-scroll">
+            <table id="gal-table"></table>
+          </div>
+          <footer>
+            <button id="btn-gal-reset" class="stamp-btn ghost danger" type="button">APAGAR PROGRESSO</button>
+            <button id="btn-gal-back" class="stamp-btn" type="button">VOLTAR</button>
+          </footer>
+        </article>
+      </section>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

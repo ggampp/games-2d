@@ -1,0 +1,337 @@
+{
+  "game": "PRANCHA",
+  "version": "1.0-assets",
+  "chroma": "#FF00FF (adaptive pink/magenta key)",
+  "note": "UI text is code, not baked in sprites.",
+  "assets": [
+    {
+      "id": "mat_wood_beam",
+      "file": "sprites/materials/mat_wood_beam.png",
+      "raw": "raw/mat_wood_beam.jpg",
+      "chroma": true,
+      "size": [
+        1103,
+        344
+      ]
+    },
+    {
+      "id": "mat_bearing",
+      "file": "sprites/materials/mat_bearing.png",
+      "raw": "raw/mat_bearing.jpg",
+      "chroma": true,
+      "size": [
+        868,
+        732
+      ]
+    },
+    {
+      "id": "mat_joint_node",
+      "file": "sprites/materials/mat_joint_node.png",
+      "raw": "raw/mat_joint_node.jpg",
+      "chroma": true,
+      "size": [
+        883,
+        889
+      ]
+    },
+    {
+      "id": "mat_steel_ibeam",
+      "file": "sprites/materials/mat_steel_ibeam.png",
+      "raw": "raw/mat_steel_ibeam.jpg",
+      "chroma": true,
+      "size": [
+        1116,
+        378
+      ]
+    },
+    {
+      "id": "mat_concrete_beam",
+      "file": "sprites/materials/mat_concrete_beam.png",
+      "raw": "raw/mat_concrete_beam.jpg",
+      "chroma": true,
+      "size": [
+        1164,
+        361
+      ]
+    },
+    {
+      "id": "mat_cable",
+      "file": "sprites/materials/mat_cable.png",
+      "raw": "raw/mat_cable.jpg",
+      "chroma": true,
+      "size": [
+        1232,
+        235
+      ]
+    },
+    {
+      "id": "abut_left",
+      "file": "sprites/structures/abut_left.png",
+      "raw": "raw/abut_left.jpg",
+      "chroma": true,
+      "size": [
+        821,
+        982
+      ]
+    },
+    {
+      "id": "icon_steel",
+      "file": "sprites/ui/icon_steel.png",
+      "raw": "raw/icon_steel.jpg",
+      "chroma": true,
+      "size": [
+        256,
+        256
+      ]
+    },
+    {
+      "id": "scaffold",
+      "file": "sprites/structures/scaffold.png",
+      "raw": "raw/scaffold.jpg",
+      "chroma": true,
+      "size": [
+        608,
+        934
+      ]
+    },
+    {
+      "id": "veh_bus",
+      "file": "sprites/vehicles/veh_bus.png",
+      "raw": "raw/veh_bus.jpg",
+      "chroma": true,
+      "size": [
+        1054,
+        291
+      ]
+    },
+    {
+      "id": "icon_concrete",
+      "file": "sprites/ui/icon_concrete.png",
+      "raw": "raw/icon_concrete.jpg",
+      "chroma": true,
+      "size": [
+        256,
+        256
+      ]
+    },
+    {
+      "id": "abut_right",
+      "file": "sprites/structures/abut_right.png",
+      "raw": "raw/abut_right.jpg",
+      "chroma": true,
+      "size": [
+        763,
+        991
+      ]
+    },
+    {
+      "id": "icon_wood",
+      "file": "sprites/ui/icon_wood.png",
+      "raw": "raw/icon_wood.jpg",
+      "chroma": true,
+      "size": [
+        256,
+        256
+      ]
+    },
+    {
+      "id": "fx_debris_sheet",
+      "file": "sprites/fx/fx_debris_sheet.png",
+      "raw": "raw/fx_debris_sheet.jpg",
+      "chroma": true,
+      "size": [
+        1199,
+        665
+      ]
+    },
+    {
+      "id": "icon_bearing",
+      "file": "sprites/ui/icon_bearing.png",
+      "raw": "raw/icon_bearing.jpg",
+      "chroma": true,
+      "size": [
+        256,
+        256
+      ]
+    },
+    {
+      "id": "fx_splash",
+      "file": "sprites/fx/fx_splash.png",
+      "raw": "raw/fx_splash.jpg",
+      "chroma": true,
+      "size": [
+        906,
+        882
+      ]
+    },
+    {
+      "id": "fx_dust",
+      "file": "sprites/fx/fx_dust.png",
+      "raw": "raw/fx_dust.jpg",
+      "chroma": true,
+      "size": [
+        853,
+        906
+      ]
+    },
+    {
+      "id": "icon_cable",
+      "file": "sprites/ui/icon_cable.png",
+      "raw": "raw/icon_cable.jpg",
+      "chroma": true,
+      "size": [
+        256,
+        256
+      ]
+    },
+    {
+      "id": "veh_van",
+      "file": "sprites/vehicles/veh_van.png",
+      "raw": "raw/veh_van.jpg",
+      "chroma": true,
+      "size": [
+        908,
+        410
+      ]
+    },
+    {
+      "id": "veh_box_truck",
+      "file": "sprites/vehicles/veh_box_truck.png",
+      "raw": "raw/veh_box_truck.jpg",
+      "chroma": true,
+      "size": [
+        939,
+        438
+      ]
+    },
+    {
+      "id": "veh_bitrem",
+      "file": "sprites/vehicles/veh_bitrem.png",
+      "raw": "raw/veh_bitrem.jpg",
+      "chroma": true,
+      "size": [
+        1247,
+        257
+      ]
+    },
+    {
+      "id": "veh_truck",
+      "file": "sprites/vehicles/veh_truck.png",
+      "raw": "raw/veh_truck.jpg",
+      "chroma": true,
+      "size": [
+        953,
+        386
+      ]
+    },
+    {
+      "id": "pier",
+      "file": "sprites/structures/pier.png",
+      "raw": "raw/pier.jpg",
+      "chroma": true,
+      "size": [
+        464,
+        904
+      ]
+    },
+    {
+      "id": "sky",
+      "file": "env/canyon/sky.png",
+      "raw": "raw/sky.jpg",
+      "chroma": false,
+      "size": null
+    },
+    {
+      "id": "far",
+      "file": "env/canyon/far.png",
+      "raw": "raw/far.jpg",
+      "chroma": false,
+      "size": null
+    },
+    {
+      "id": "near",
+      "file": "env/canyon/near.png",
+      "raw": "raw/near.jpg",
+      "chroma": false,
+      "size": null
+    },
+    {
+      "id": "gameplay_plate",
+      "file": "env/canyon/gameplay_plate.png",
+      "raw": "raw/gameplay_plate.jpg",
+      "chroma": false,
+      "size": null
+    },
+    {
+      "id": "mid",
+      "file": "env/canyon/mid.png",
+      "raw": "raw/mid.jpg",
+      "chroma": false,
+      "size": null
+    },
+    {
+      "id": "water",
+      "file": "env/canyon/water.png",
+      "raw": "raw/water.jpg",
+      "chroma": false,
+      "size": null
+    },
+    {
+      "id": "sky",
+      "file": "env/plains/sky.png",
+      "raw": "raw/sky.jpg",
+      "chroma": false,
+      "size": null
+    },
+    {
+      "id": "water",
+      "file": "env/plains/water.png",
+      "raw": "raw/water.jpg",
+      "chroma": false,
+      "size": null
+    },
+    {
+      "id": "far",
+      "file": "env/plains/far.png",
+      "raw": "raw/far.jpg",
+      "chroma": false,
+      "size": null
+    },
+    {
+      "id": "aerial_plate",
+      "file": "env/plains/aerial_plate.png",
+      "raw": "raw/aerial_plate.jpg",
+      "chroma": false,
+      "size": null
+    },
+    {
+      "id": "gameplay_plate",
+      "file": "env/plains/gameplay_plate.png",
+      "raw": "raw/gameplay_plate.jpg",
+      "chroma": false,
+      "size": null
+    },
+    {
+      "id": "fx_debris_pack",
+      "files": [
+        "sprites/fx/fx_debris_01.png",
+        "sprites/fx/fx_debris_02.png",
+        "sprites/fx/fx_debris_03.png",
+        "sprites/fx/fx_debris_04.png",
+        "sprites/fx/fx_debris_05.png",
+        "sprites/fx/fx_debris_06.png",
+        "sprites/fx/fx_debris_07.png",
+        "sprites/fx/fx_debris_08.png",
+        "sprites/fx/fx_debris_09.png",
+        "sprites/fx/fx_debris_10.png",
+        "sprites/fx/fx_debris_11.png",
+        "sprites/fx/fx_debris_12.png",
+        "sprites/fx/fx_debris_13.png",
+        "sprites/fx/fx_debris_14.png",
+        "sprites/fx/fx_debris_15.png",
+        "sprites/fx/fx_debris_16.png"
+      ],
+      "chroma": true
+    }
+  ]
+}

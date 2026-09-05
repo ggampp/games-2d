@@ -1,0 +1,80 @@
+{
+  "source": "01-gdd/economia-e-niveis.xlsx",
+  "costs": {
+    "wood": { "perMeter": 420, "unit": "R$/m" },
+    "steel": { "perMeter": 1860, "unit": "R$/m" },
+    "concrete": { "perMeter": 980, "unit": "R$/m" },
+    "cable": { "perMeter": 1240, "unit": "R$/m" },
+    "bearing": { "perUnit": 8500, "unit": "R$/un" },
+    "extraAbutment": { "perUnit": 28000, "unit": "R$/un" }
+  },
+  "laborFraction": 0.18,
+  "budgetSlack": 1.35,
+  "safety": {
+    "fsPass": 1.15,
+    "fsThreeStar": 1.8,
+    "deflectionLimit": 800
+  },
+  "materials": [
+    {
+      "id": "wood",
+      "name": "Madeira",
+      "costPerMeter": 420,
+      "tension": 0.25,
+      "compression": 0.35,
+      "weight": 0.4,
+      "color": "#B08968",
+      "sprite": "assets/sprites/materials/mat_wood_beam.png",
+      "icon": "assets/sprites/ui/icon_wood.png",
+      "use": "Escora, banzo curto, tutorial"
+    },
+    {
+      "id": "steel",
+      "name": "Aço estrutural",
+      "costPerMeter": 1860,
+      "tension": 1.0,
+      "compression": 1.0,
+      "weight": 1.0,
+      "color": "#8A9AA8",
+      "sprite": "assets/sprites/materials/mat_steel_ibeam.png",
+      "icon": "assets/sprites/ui/icon_steel.png",
+      "use": "Treliça, viga, pilar"
+    },
+    {
+      "id": "concrete",
+      "name": "Concreto",
+      "costPerMeter": 980,
+      "tension": 0.12,
+      "compression": 0.85,
+      "weight": 1.45,
+      "color": "#C4BBB2",
+      "sprite": "assets/sprites/materials/mat_concrete_beam.png",
+      "icon": "assets/sprites/ui/icon_concrete.png",
+      "use": "Pilar, tabuleiro, encontro"
+    },
+    {
+      "id": "cable",
+      "name": "Cabo de aço",
+      "costPerMeter": 1240,
+      "tension": 1.35,
+      "compression": 0.0,
+      "weight": 0.22,
+      "color": "#D9E2EC",
+      "sprite": "assets/sprites/materials/mat_cable.png",
+      "icon": "assets/sprites/ui/icon_cable.png",
+      "use": "Estai, suspensão, tirante — só tração"
+    },
+    {
+      "id": "bearing",
+      "name": "Apoio elastomérico",
+      "costPerUnit": 8500,
+      "tension": null,
+      "compression": null,
+      "weight": 0.15,
+      "color": "#4A4A4A",
+      "sprite": "assets/sprites/materials/mat_bearing.png",
+      "icon": "assets/sprites/ui/icon_bearing.png",
+      "use": "Libera rotação no encontro"
+    }
+  ]
+}

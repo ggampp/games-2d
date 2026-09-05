@@ -1,0 +1,54 @@
+{
+  "source": "01-gdd/economia-e-niveis.xlsx",
+  "mvp": [1, 2, 3, 4, 5, 6, 7, 8],
+  "vehicles": {
+    "van": { "massT": 3, "sprite": "assets/sprites/vehicles/veh_van.png" },
+    "truck": { "massT": 8, "sprite": "assets/sprites/vehicles/veh_truck.png" },
+    "bus": { "massT": 12, "sprite": "assets/sprites/vehicles/veh_bus.png" },
+    "bitrem": { "massT": 32, "sprite": "assets/sprites/vehicles/veh_bitrem.png" }
+  },
+  "biomes": {
+    "plains": {
+      "id": "plains",
+      "name": "Planície",
+      "env": "assets/env/plains",
+      "plate": "assets/env/plains/gameplay_plate.png"
+    },
+    "canyon": {
+      "id": "canyon",
+      "name": "Canyon",
+      "env": "assets/env/canyon",
+      "plate": "assets/env/canyon/gameplay_plate.png"
+    },
+    "estuary": { "id": "estuary", "name": "Estuário" },
+    "serra": { "id": "serra", "name": "Serra" },
+    "mangrove": { "id": "mangrove", "name": "Mangue" },
+    "urban": { "id": "urban", "name": "Urbano" }
+  },
+  "levels": [
+    { "id": 1, "biome": "plains", "name": "Córrego do Aprendiz", "spanM": 14, "load": "Van 3 t", "vehicle": "van", "restriction": "Nenhuma — só atravessar", "budget": 14764.68, "fs3": 1.8, "teaches": "Nós, barras, testar", "tutorial": true, "catalog": ["wood"] },
+    { "id": 2, "biome": "plains", "name": "Ponte do Sítio", "spanM": 18, "load": "Caminhão 8 t", "vehicle": "truck", "restriction": "Orçamento apertado", "budget": 18983.16, "fs3": 1.8, "teaches": "Não overbuildar", "tutorial": true, "catalog": ["wood", "steel"] },
+    { "id": 3, "biome": "plains", "name": "Rio do Meio", "spanM": 24, "load": "Ônibus 12 t", "vehicle": "bus", "restriction": "Cabo disponível", "budget": 25310.88, "fs3": 1.8, "teaches": "Tração ≠ compressão", "tutorial": true, "catalog": ["wood", "steel", "cable"] },
+    { "id": 4, "biome": "plains", "name": "Passagem da Colheita", "spanM": 28, "load": "Bitrem 32 t", "vehicle": "bitrem", "restriction": "Carga pesada lenta", "budget": 29529.36, "fs3": 1.8, "teaches": "Carga móvel simples", "tutorial": false, "catalog": ["wood", "steel", "cable", "concrete"] },
+    { "id": 5, "biome": "canyon", "name": "Fenda Seca", "spanM": 32, "load": "Caminhão 12 t", "vehicle": "truck", "restriction": "Encontros altos / flambagem", "budget": 40176, "fs3": 1.8, "teaches": "Pilar esbelto", "tutorial": false, "catalog": ["wood", "steel", "cable", "concrete"] },
+    { "id": 6, "biome": "canyon", "name": "Vão do Gavião", "spanM": 38, "load": "Dois carros", "vehicle": "van", "restriction": "Pouco aço no canteiro", "budget": 47709, "fs3": 1.8, "teaches": "Treliça eficiente", "tutorial": false, "catalog": ["wood", "steel", "cable", "concrete"] },
+    { "id": 7, "biome": "canyon", "name": "Corte da Pedra", "spanM": 42, "load": "Caminhão 16 t", "vehicle": "truck", "restriction": "Proibido pilar no leito", "budget": 52731, "fs3": 1.8, "teaches": "Vão livre obrigatório", "tutorial": false, "catalog": ["wood", "steel", "cable", "concrete"] },
+    { "id": 8, "biome": "canyon", "name": "Abismo Norte", "spanM": 48, "load": "Bitrem 36 t", "vehicle": "bitrem", "restriction": "Orçamento + vão livre", "budget": 60264, "fs3": 1.8, "teaches": "Duas restrições", "tutorial": false, "catalog": ["wood", "steel", "cable", "concrete", "bearing"] },
+    { "id": 9, "biome": "estuary", "name": "Maré Baixa", "spanM": 26, "load": "Van + vento leve", "vehicle": "van", "restriction": "Nível d'água sobe no 2º teste", "budget": 35907.3, "fs3": 1.8, "teaches": "Peso hidrostático", "tutorial": false },
+    { "id": 10, "biome": "estuary", "name": "Canal do Porto", "spanM": 34, "load": "Caminhão 14 t", "vehicle": "truck", "restriction": "Gabarito náutico 8 m", "budget": 46955.7, "fs3": 1.8, "teaches": "Altura livre", "tutorial": false },
+    { "id": 11, "biome": "estuary", "name": "Foz do Itajaí", "spanM": 40, "load": "Bitrem 40 t", "vehicle": "bitrem", "restriction": "Gabarito 10 m + maré", "budget": 55242, "fs3": 1.8, "teaches": "Combo ambiental", "tutorial": false },
+    { "id": 12, "biome": "estuary", "name": "Porto Noturno", "spanM": 44, "load": "Duas cargas opostas", "vehicle": "truck", "restriction": "Tráfego simultâneo", "budget": 60766.2, "fs3": 1.8, "teaches": "Momentos invertidos", "tutorial": false },
+    { "id": 13, "biome": "serra", "name": "Camada de Vento", "spanM": 30, "load": "Ônibus 14 t", "vehicle": "bus", "restriction": "Vento 70 km/h", "budget": 43691.4, "fs3": 1.8, "teaches": "Contra-ventamento", "tutorial": false },
+    { "id": 14, "biome": "serra", "name": "Serra do Rio do Rastro", "spanM": 36, "load": "Caminhão 16 t", "vehicle": "truck", "restriction": "Vento 90 km/h", "budget": 52429.68, "fs3": 1.8, "teaches": "Cabos + rigidez lateral", "tutorial": false },
+    { "id": 15, "biome": "serra", "name": "Pico do Corcovado SC", "spanM": 40, "load": "Van + vento rajada", "vehicle": "van", "restriction": "Rajadas no ensaio", "budget": 58255.2, "fs3": 1.8, "teaches": "Carga variável no tempo", "tutorial": false },
+    { "id": 16, "biome": "serra", "name": "Passagem Austral", "spanM": 46, "load": "Bitrem 36 t", "vehicle": "bitrem", "restriction": "Vento + orçamento", "budget": 66993.48, "fs3": 1.8, "teaches": "Boss do bioma", "tutorial": false },
+    { "id": 17, "biome": "mangrove", "name": "Solo Mole I", "spanM": 22, "load": "Caminhão 10 t", "vehicle": "truck", "restriction": "Fundação cara", "budget": 34250.04, "fs3": 1.8, "teaches": "Poucos pilares", "tutorial": false },
+    { "id": 18, "biome": "mangrove", "name": "Estrada da Vila", "spanM": 28, "load": "Ônibus 12 t", "vehicle": "bus", "restriction": "Recalque diferencial", "budget": 43590.96, "fs3": 1.8, "teaches": "Apoios flexíveis", "tutorial": false },
+    { "id": 19, "biome": "mangrove", "name": "Canal do Siri", "spanM": 34, "load": "Bitrem 28 t", "vehicle": "bitrem", "restriction": "Proibido encontro no mangue D", "budget": 52931.88, "fs3": 1.8, "teaches": "Vão assimétrico", "tutorial": false },
+    { "id": 20, "biome": "mangrove", "name": "Baía Enterrada", "spanM": 40, "load": "Caminhão 18 t", "vehicle": "truck", "restriction": "Solo + maré", "budget": 62272.8, "fs3": 1.8, "teaches": "Combo solo/água", "tutorial": false },
+    { "id": 21, "biome": "urban", "name": "Linha do Metrô", "spanM": 24, "load": "Metrô 80 t eq.", "vehicle": "bus", "restriction": "Gabarito ferroviário", "budget": 42184.8, "fs3": 1.8, "teaches": "Flecha rigorosa", "tutorial": false },
+    { "id": 22, "biome": "urban", "name": "Obra em Etapas", "spanM": 30, "load": "Caminhão 16 t", "vehicle": "truck", "restriction": "Escorar → concretar → tirar escora", "budget": 52731, "fs3": 1.8, "teaches": "Peso construtivo", "tutorial": false },
+    { "id": 23, "biome": "urban", "name": "Patrimônio Centro", "spanM": 36, "load": "Ônibus 14 t", "vehicle": "bus", "restriction": "Não demolir arco existente", "budget": 63277.2, "fs3": 1.8, "teaches": "Reforço", "tutorial": false },
+    { "id": 24, "biome": "urban", "name": "Hercílio Luz — Set-piece", "spanM": 52, "load": "Trem turístico 28 t", "vehicle": "bitrem", "restriction": "Vento 90 + gabarito 18 + patrimônio", "budget": 91400.4, "fs3": 1.8, "teaches": "Boss final", "tutorial": false }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "gameId": "gm_mtkkzy7p_f1c6fd1c",
+  "kind": "folder",
+  "title": "PRANCHA",
+  "source": "D:\\claude_projects\\dev-games\\games-2d\\prancha",
+  "engine": "unknown",
+  "classified": {
+    "genre": {
+      "id": "puzzle",
+      "name": "Puzzle",
+      "score": 5,
+      "reasons": [
+        "alias:puzzle",
+        "id:puzzle"
+      ]
+    },
+    "alternatives": [
+      {
+        "id": "endless-runner",
+        "name": "Endless runner",
+        "score": 0,
+        "reasons": []
+      },
+      {
+        "id": "arcade-action",
+        "name": "Arcade action",
+        "score": 0,
+        "reasons": []
+      },
+      {
+        "id": "platformer",
+        "name": "Platformer",
+        "score": 0,
+        "reasons": []
+      }
+    ],
+    "artStyle": {
+      "id": "cel-shaded",
+      "name": "Cel / toon",
+      "score": 2,
+      "reasons": [
+        "alias:toon"
+      ]
+    },
+    "artAlternatives": [
+      {
+        "id": "low-poly",
+        "name": "Low poly stylized",
+        "score": 0,
+        "reasons": []
+      },
+      {
+        "id": "pbr-realistic",
+        "name": "PBR semi-realista",
+        "score": 0,
+        "reasons": []
+      }
+    ],
+    "confidence": 0.5,
+    "textUsed": "PRANCHA — O vão não perdoa. Puzzle de física 2.5D vista lateral. Jogador é engenheiro civil: projeta pontes com madeira, aço, concreto, cabo e apoio elastomérico, respeita orçamento em R$, lê esforços em verde/amarelo/vermelho e envia a estrutura a um ensaio de carga. Estética de prancheta/blueprint (#0B1F3A), UI tipo mesa de engenheiro, sem cartoon. Loop: briefing memorial → modo construir (físic"
+  },
+  "systems": []
+}

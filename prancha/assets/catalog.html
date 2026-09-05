@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>PRANCHA — catálogo de assets</title>
+  <style>
+    :root { --navy: #0B1F3A; --cyan: #7EC8E3; --paper: #E8EEF2; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.4 "Segoe UI", sans-serif; background: var(--navy); color: var(--paper); }
+    header { padding: 24px 32px 8px; }
+    h1 { font-weight: 600; letter-spacing: 0.12em; margin: 0; }
+    p { color: var(--cyan); margin: 8px 0 0; }
+    section { padding: 16px 32px 32px; }
+    h2 { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--cyan); border-bottom: 1px solid #12355B; padding-bottom: 8px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    figure {
+      margin: 0;
+      background:
+        linear-gradient(45deg, #1a3358 25%, transparent 25%) 0 0 / 16px 16px,
+        linear-gradient(-45deg, #1a3358 25%, transparent 25%) 0 8px / 16px 16px,
+        linear-gradient(45deg, transparent 75%, #1a3358 75%) 8px -8px / 16px 16px,
+        linear-gradient(-45deg, transparent 75%, #1a3358 75%) -8px 0 / 16px 16px,
+        #0e2747;
+      border: 1px solid #12355B;
+      padding: 12px;
+    }
+    figure.wide { grid-column: span 2; }
+    img { width: 100%; height: 140px; object-fit: contain; display: block; }
+    figcaption { margin-top: 8px; font-size: 12px; color: #7EC8E3; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>PRANCHA</h1>
+    <p>Catálogo de sprites — fundo xadrez para conferir o recorte.</p>
+  </header>
+  <section>
+    <h2>Materiais</h2>
+    <div class="grid" id="materials"></div>
+  </section>
+  <section>
+    <h2>Veículos</h2>
+    <div class="grid" id="vehicles"></div>
+  </section>
+  <section>
+    <h2>Estruturas</h2>
+    <div class="grid" id="structures"></div>
+  </section>
+  <section>
+    <h2>Ícones</h2>
+    <div class="grid" id="ui"></div>
+  </section>
+  <section>
+    <h2>FX</h2>
+    <div class="grid" id="fx"></div>
+  </section>
+  <section>
+    <h2>Ambiente</h2>
+    <div class="grid" id="env"></div>
+  </section>
+  <script>
+    const groups = {
+      materials: [
+        "sprites/materials/mat_wood_beam.png",
+        "sprites/materials/mat_steel_ibeam.png",
+        "sprites/materials/mat_concrete_beam.png",
+        "sprites/materials/mat_cable.png",
+        "sprites/materials/mat_bearing.png",
+        "sprites/materials/mat_joint_node.png",
+      ],
+      vehicles: [
+        "sprites/vehicles/veh_van.png",
+        "sprites/vehicles/veh_truck.png",
+        "sprites/vehicles/veh_box_truck.png",
+        "sprites/vehicles/veh_bus.png",
+        "sprites/vehicles/veh_bitrem.png",
+      ],
+      structures: [
+        "sprites/structures/abut_left.png",
+        "sprites/structures/abut_right.png",
+        "sprites/structures/pier.png",
+        "sprites/structures/scaffold.png",
+      ],
+      ui: [
+        "sprites/ui/icon_wood.png",
+        "sprites/ui/icon_steel.png",
+        "sprites/ui/icon_concrete.png",
+        "sprites/ui/icon_cable.png",
+        "sprites/ui/icon_bearing.png",
+      ],
+      fx: [
+        "sprites/fx/fx_splash.png",
+        "sprites/fx/fx_dust.png",
+        "sprites/fx/fx_debris_sheet.png",
+      ],
+      env: [
+        "env/canyon/gameplay_plate.png",
+        "env/canyon/mid.png",
+        "env/canyon/sky.png",
+        "env/plains/gameplay_plate.png",
+        "env/plains/aerial_plate.png",
+        "env/plains/sky.png",
+      ],
+    };
+    for (const [id, files] of Object.entries(groups)) {
+      const root = document.getElementById(id);
+      for (const file of files) {
+        const fig = document.createElement("figure");
+        if (id === "env") fig.className = "wide";
+        fig.innerHTML = `<img src="${file}" alt="${file}" /><figcaption>${file.split("/").pop()}</figcaption>`;
+        root.appendChild(fig);
+      }
+    }
+  </script>
+</body>
+</html>

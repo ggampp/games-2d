@@ -1,0 +1,18 @@
+{
+  "assets": [
+    {
+      "key": "canyon_gameplay_plate",
+      "kind": "texture",
+      "path": "assets/env/canyon/gameplay_plate.png",
+      "provider": "host",
+      "registeredAt": "2026-09-02T21:12:55.425Z"
+    },
+    {
+      "key": "veh_van",
+      "kind": "sprite",
+      "path": "assets/sprites/vehicles/veh_van.png",
+      "provider": "host",
+      "registeredAt": "2026-09-02T21:12:55.427Z"
+    }
+  ]
+}
