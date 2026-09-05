@@ -2,3 +2,9 @@ node_modules/
 dist/
 *.local
 .DS_Store
+
+# CraftPix assets (license forbids redistribution)
+assets-raw/
+public/assets/forest/
+public/assets/dungeon/
+public/assets/tavern/
