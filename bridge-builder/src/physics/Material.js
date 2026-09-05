@@ -1,0 +1,72 @@
+export const MATERIALS = {
+  ROAD: {
+    id: 'ROAD',
+    name: 'Pista (Deck)',
+    color: '#3d4452',
+    highlightColor: '#606b7d',
+    width: 8,
+    maxLength: 95,
+    stiffness: 0.95,
+    breakingStrain: 0.20,
+    costPerUnit: 25,
+    isRoad: true,
+    tensionOnly: false,
+    dash: []
+  },
+  WOOD: {
+    id: 'WOOD',
+    name: 'Madeira',
+    color: '#b07746',
+    highlightColor: '#d6975e',
+    width: 5,
+    maxLength: 105,
+    stiffness: 0.88,
+    breakingStrain: 0.24,
+    costPerUnit: 12,
+    isRoad: false,
+    tensionOnly: false,
+    dash: []
+  },
+  STEEL: {
+    id: 'STEEL',
+    name: 'Viga de Aço',
+    color: '#5e82a6',
+    highlightColor: '#88aed4',
+    width: 6,
+    maxLength: 140,
+    stiffness: 0.98,
+    breakingStrain: 0.38,
+    costPerUnit: 38,
+    isRoad: false,
+    tensionOnly: false,
+    dash: []
+  },
+  CABLE: {
+    id: 'CABLE',
+    name: 'Cabo de Aço',
+    color: '#9baab8',
+    highlightColor: '#c5d7e8',
+    width: 3,
+    maxLength: 220,
+    stiffness: 0.92,
+    breakingStrain: 0.42,
+    costPerUnit: 28,
+    isRoad: false,
+    tensionOnly: true,
+    dash: [4, 2]
+  },
+  CONCRETE: {
+    id: 'CONCRETE',
+    name: 'Concreto Estrutural',
+    color: '#8c9199',
+    highlightColor: '#b2b7bf',
+    width: 9,
+    maxLength: 110,
+    stiffness: 0.99,
+    breakingStrain: 0.30,
+    costPerUnit: 32,
+    isRoad: false,
+    tensionOnly: false,
+    dash: []
+  }
+};

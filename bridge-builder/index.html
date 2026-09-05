@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bridge Builder 2D - Simulador de Engenharia Estrutural</title>
+  <meta name="description" content="Jogo 2D de física e simulação de pontes com modelos de Treliça Warren, Escora em Leque e Arco com pilares sob teste de veículos." />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <!-- Header Bar -->
+  <header class="app-header">
+    <div class="logo-section">
+      <div class="logo-icon">🌉</div>
+      <div>
+        <h1 class="logo-title">Bridge Builder 2D</h1>
+        <div class="logo-subtitle">Simulador de Engenharia Estrutural</div>
+      </div>
+    </div>
+
+    <!-- Telemetry Badges -->
+    <div class="header-telemetry">
+      <div class="telemetry-item">
+        <span class="telemetry-label">Custo Total</span>
+        <span id="budgetCost" class="telemetry-val">$0</span>
+      </div>
+
+      <div class="telemetry-item">
+        <span class="telemetry-label">Vigas / Nós</span>
+        <span class="telemetry-val"><span id="beamsCount">0</span> / <span id="nodesCount">0</span></span>
+      </div>
+
+      <div class="telemetry-item stress-container">
+        <div style="display: flex; justify-content: space-between; width: 100%;">
+          <span class="telemetry-label">Estresse Máximo</span>
+          <span id="stressVal" class="telemetry-val" style="font-size: 0.95rem;">0%</span>
+        </div>
+        <div class="stress-bar">
+          <div id="stressBarFill" class="stress-fill"></div>
+        </div>
+      </div>
+
+      <button id="btnMute" class="btn-secondary" title="Ativar/Desativar Som">🔊 Som</button>
+    </div>
+  </header>
+
+  <!-- Main Viewport -->
+  <main class="app-main">
+    <!-- Simulation Canvas -->
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas" width="960" height="560"></canvas>
+    </div>
+
+    <!-- Primary Action Bar -->
+    <div class="action-bar">
+      <div class="action-bar-left">
+        <button id="btnStartTest" class="btn-primary">
+          ▶️ Iniciar Teste com Veículo
+        </button>
+
+        <!-- Simulation Controls (shown in test mode) -->
+        <div id="testControlsPanel" class="hidden" style="display: flex; gap: 8px;">
+          <button id="btnPauseSim" class="btn-secondary">⏸️ Pausar</button>
+          <button id="btnSpeedSlow" class="btn-secondary">0.5x</button>
+          <button id="btnSpeedNormal" class="btn-secondary active">1.0x</button>
+          <button id="btnSpeedFast" class="btn-secondary">2.0x</button>
+          <button id="btnResetSim" class="btn-secondary">⏮️ Reposicionar</button>
+        </div>
+
+        <!-- Build Tools (shown in build mode) -->
+        <div id="buildControlsPanel" style="display: flex; gap: 8px;">
+          <button id="btnDeleteMode" class="btn-secondary btn-danger" title="Ferramenta de Borracha ou clique direito para deletar">
+            🗑️ Remover Viga
+          </button>
+          <button id="btnClearAll" class="btn-secondary" title="Limpar todas as vigas">
+            🧹 Limpar Ponte
+          </button>
+        </div>
+      </div>
+
+      <div class="action-bar-right">
+        <span style="font-size: 0.8rem; color: var(--text-muted);">
+          💡 Dica: Clique e arraste entre os nós para desenhar vigas.
+        </span>
+      </div>
+    </div>
+
+    <!-- Bottom Structural Panels -->
+    <div class="panels-grid">
+      <!-- Left Panel: Archetypes & Education -->
+      <section class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>🏛️ Arquétipos de Estrutura</span>
+          </div>
+          <span class="panel-tag">Foto de Referência</span>
+        </div>
+
+        <div class="archetypes-row">
+          <button class="preset-btn active" data-preset="WARREN_TRUSS" title="Modelo A da imagem de referência">
+            <span class="preset-badge">A</span>
+            <span class="preset-name">Treliça Warren</span>
+          </button>
+
+          <button class="preset-btn" data-preset="FAN_STRUT" title="Modelo B da imagem de referência">
+            <span class="preset-badge">B</span>
+            <span class="preset-name">Escora em Leque</span>
+          </button>
+
+          <button class="preset-btn" data-preset="ARCH_BRIDGE" title="Modelo C da imagem de referência">
+            <span class="preset-badge">C</span>
+            <span class="preset-name">Ponte em Arco</span>
+          </button>
+
+          <button class="preset-btn" data-preset="EMPTY" title="Criar seu próprio projeto do zero">
+            <span class="preset-badge" style="background: #475569;">✏️</span>
+            <span class="preset-name">Modo Livre</span>
+          </button>
+        </div>
+
+        <!-- Dynamic Archetype Explanation Box -->
+        <div class="archetype-info-box">
+          <div id="archetypeTitle" class="info-title">Modelo A: Treliça Warren (Deck Truss)</div>
+          <div id="archetypeDesc" class="info-desc">
+            Vigas paralelas de topo e base com diagonais triangulares alternadas. Distribuição de carga uniforme e alta rigidez estrutural contra deflexão.
+          </div>
+        </div>
+
+        <!-- Materials Row -->
+        <div class="panel-header" style="margin-top: 4px;">
+          <div class="panel-title">
+            <span>🧱 Materiais de Construção</span>
+          </div>
+          <span class="panel-tag">Selecione para desenhar</span>
+        </div>
+
+        <div class="materials-row">
+          <button class="material-btn" data-material="ROAD">
+            <div class="material-preview-bar" style="background: #3d4452; border: 1px solid #606b7d;"></div>
+            <span class="material-name">Pista (Deck)</span>
+            <span class="material-cost">$25/m</span>
+          </button>
+
+          <button class="material-btn active" data-material="STEEL">
+            <div class="material-preview-bar" style="background: #5e82a6;"></div>
+            <span class="material-name">Aço Estrutural</span>
+            <span class="material-cost">$38/m</span>
+          </button>
+
+          <button class="material-btn" data-material="WOOD">
+            <div class="material-preview-bar" style="background: #b07746;"></div>
+            <span class="material-name">Madeira</span>
+            <span class="material-cost">$12/m</span>
+          </button>
+
+          <button class="material-btn" data-material="CABLE">
+            <div class="material-preview-bar" style="background: #9baab8; border-top: 2px dashed #c5d7e8;"></div>
+            <span class="material-name">Cabo de Aço</span>
+            <span class="material-cost">$28/m</span>
+          </button>
+
+          <button class="material-btn" data-material="CONCRETE">
+            <div class="material-preview-bar" style="background: #8c9199; height: 8px;"></div>
+            <span class="material-name">Concreto</span>
+            <span class="material-cost">$32/m</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Right Panel: Vehicle Garage & Testing -->
+      <section class="panel-card">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>🏎️ Garagem de Teste de Veículos</span>
+          </div>
+          <span class="panel-tag">Escolha a Carga</span>
+        </div>
+
+        <div class="vehicles-row">
+          <div class="vehicle-card active" data-vehicle="CAR">
+            <span class="vehicle-icon">🚗</span>
+            <span class="vehicle-name">Sedan</span>
+            <span class="vehicle-weight">25 Ton</span>
+          </div>
+
+          <div class="vehicle-card" data-vehicle="VAN">
+            <span class="vehicle-icon">🚌</span>
+            <span class="vehicle-name">Ônibus</span>
+            <span class="vehicle-weight">55 Ton</span>
+          </div>
+
+          <div class="vehicle-card" data-vehicle="TRUCK">
+            <span class="vehicle-icon">🚛</span>
+            <span class="vehicle-name">Caminhão</span>
+            <span class="vehicle-weight">95 Ton</span>
+          </div>
+
+          <div class="vehicle-card" data-vehicle="MONSTER">
+            <span class="vehicle-icon">🚜</span>
+            <span class="vehicle-name">Monster</span>
+            <span class="vehicle-weight">140 Ton</span>
+          </div>
+        </div>
+
+        <!-- Legend / Physics Guide -->
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.75rem; color: var(--text-secondary); background: rgba(15, 23, 42, 0.5); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+          <div style="font-weight: 700; color: #f8fafc;">📊 Monitoramento de Carga em Tempo Real:</div>
+          <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+            <span style="color: #22c55e;">● 0 - 50%: Normal</span>
+            <span style="color: #eab308;">● 50 - 75%: Estresse Moderado</span>
+            <span style="color: #f97316;">● 75 - 90%: Alerta</span>
+            <span style="color: #ef4444;">● > 90%: Ruptura Iminente</span>
+          </div>
+          <div style="line-height: 1.35; margin-top: 4px;">
+            A física usa integração de Verlet com deformação realística. Vigas que ultrapassarem 100% de estresse quebram com estalo mecânico e caem no cânion!
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
