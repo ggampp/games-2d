@@ -98,10 +98,45 @@ favor-dos-deuses/
 
 ## Assets
 
-O jogo usa gráficos placeholder gerados proceduralmente (retângulos coloridos 16x16). A estrutura `public/assets/` está preparada para receber packs do CraftPix:
-- forest (floresta)
-- dungeon (ruínas)
-- tavern (hub)
+O jogo usa gráficos placeholder gerados proceduralmente por padrão. Para visuais melhores, você pode adicionar packs CraftPix localmente.
+
+### Usando Placeholders (padrão)
+O jogo funciona sem arquivos externos - retângulos coloridos representam tiles, árvores e inimigos.
+
+### Usando CraftPix Tilesets (opcional)
+Coloque os assets CraftPix em `public/assets/` seguindo esta estrutura:
+
+```
+public/assets/
+├── forest/
+│   ├── Ground_grass.png          # Tileset de chão 16x16
+│   ├── Objects.png               # Objetos diversos
+│   ├── Water_coasts.png          # Tiles de água
+│   └── objects/
+│       ├── Tree1.png … Tree14.png
+│       ├── Bush1.png … Bush3.png
+│       ├── Stone1.png, Stone2.png
+│       └── Mushroom1.png, Mushroom2.png
+├── dungeon/
+│   ├── walls_floor.png           # Tileset principal 16x16
+│   ├── doors.png
+│   ├── stairs.png
+│   ├── coffins.png
+│   ├── torches.png
+│   ├── other_objects.png
+│   └── Spikes.png
+└── tavern/
+    ├── Exterior.png              # Tileset exterior 16x16
+    ├── Interior_1st_floor.png
+    ├── Walls_street.png
+    ├── Walls_interior.png
+    ├── door_small.png
+    └── Decorative_cracks.png
+```
+
+**Importante:** Assets CraftPix são **locais apenas** e não devem ser commitados (licença proíbe redistribuição). O `.gitignore` já exclui essas pastas.
+
+O jogo detecta automaticamente quais assets estão disponíveis e usa placeholders para os faltantes.
 
 ## Stack
 
