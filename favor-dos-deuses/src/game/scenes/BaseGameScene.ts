@@ -39,6 +39,9 @@ export abstract class BaseGameScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.interactables = [];
+    this.enemies = [];
+
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.wasd = {
       W: this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W),
@@ -242,7 +245,7 @@ export abstract class BaseGameScene extends Phaser.Scene {
         interactable.sprite.y
       );
 
-      if (dist <= 40) {
+      if (dist <= 50) {
         this.handleInteraction(interactable.type, interactable.data);
         return;
       }
