@@ -76,15 +76,16 @@ export class HudManager {
   }
 
   update(gameState, pieceController) {
-    if (this.scoreEl) this.scoreEl.textContent = gameState.score.toLocaleString();
-    if (this.highScoreEl) this.highScoreEl.textContent = gameState.highScore.toLocaleString();
-    if (this.levelEl) this.levelEl.textContent = gameState.level;
-    if (this.linesEl) this.linesEl.textContent = gameState.linesCleared;
+    // Format numbers with arcade style leading zeros
+    if (this.scoreEl) this.scoreEl.textContent = String(gameState.score).padStart(6, '0');
+    if (this.highScoreEl) this.highScoreEl.textContent = String(gameState.highScore).padStart(6, '0');
+    if (this.levelEl) this.levelEl.textContent = String(gameState.level).padStart(2, '0');
+    if (this.linesEl) this.linesEl.textContent = String(gameState.linesCleared).padStart(2, '0');
     if (this.piecesEl) {
       const nextMilestone = (Math.floor(gameState.piecesPlaced / (CONFIG.PIECES_PER_LEVEL || 50)) + 1) * (CONFIG.PIECES_PER_LEVEL || 50);
-      this.piecesEl.textContent = `${gameState.piecesPlaced} / ${nextMilestone}`;
+      this.piecesEl.textContent = `${gameState.piecesPlaced}/${nextMilestone}`;
     }
-    if (this.grainsEl) this.grainsEl.textContent = gameState.totalGrainsCleared.toLocaleString();
+    if (this.grainsEl) this.grainsEl.textContent = String(gameState.totalGrainsCleared).padStart(5, '0');
 
     // Wind indicator for Chaos mode
     if (this.windIndicator) {
@@ -152,9 +153,10 @@ export class HudManager {
     const rows = matrix.length;
     const cols = matrix[0].length;
 
-    const cellSize = Math.min((w - 20) / cols, (h - 20) / rows);
-    const startX = (w - cols * cellSize) / 2;
-    const startY = (h - rows * cellSize) / 2;
+    const padding = 6;
+    const cellSize = Math.max(6, Math.floor(Math.min((w - padding) / cols, (h - padding) / rows)));
+    const startX = Math.floor((w - cols * cellSize) / 2);
+    const startY = Math.floor((h - rows * cellSize) / 2);
 
     const colorDef = this.palette.colors[shape.colorId] || { hex: '#00f0ff' };
 

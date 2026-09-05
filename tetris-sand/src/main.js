@@ -128,6 +128,18 @@ class SandTetrisApp {
           this.startNewGame(this.gameState.mode);
         }
       }
+
+      // Global arcade hotkeys
+      if (e.code === 'KeyM') {
+        const isMuted = this.soundFx.toggleMute();
+        const soundBtn = document.getElementById('btn-sound-toggle');
+        if (soundBtn) soundBtn.textContent = isMuted ? '🔇' : '🔊';
+        const muteBadge = document.getElementById('quick-mute-badge');
+        if (muteBadge) muteBadge.classList.toggle('muted', isMuted);
+      } else if (e.code === 'KeyT') {
+        const crtBtn = document.getElementById('btn-crt-toggle');
+        if (crtBtn) crtBtn.click();
+      }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -557,12 +569,12 @@ class SandTetrisApp {
 
     this.screenShake.apply(this.ctx, this.virtualWidth / 2, this.virtualHeight / 2);
 
-    // 1. Board Background
-    this.ctx.fillStyle = this.palette.boardBg || '#0f172a';
+    // 1. Board Background with subtle transparency for layered synthwave depth
+    this.ctx.fillStyle = 'rgba(14, 6, 28, 0.76)';
     this.ctx.fillRect(0, 0, this.virtualWidth, this.virtualHeight);
 
-    // Grid lines
-    this.ctx.strokeStyle = this.palette.gridLines || 'rgba(255, 255, 255, 0.04)';
+    // Grid lines with retro neon pink glow
+    this.ctx.strokeStyle = 'rgba(255, 42, 133, 0.14)';
     this.ctx.lineWidth = 1;
     for (let c = 1; c < CONFIG.BLOCK_COLS; c++) {
       const x = c * this.blockScaleX;
