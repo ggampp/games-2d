@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Fire Walker</title>
+  <style>
+    /* Layout: full-bleed pixel stage on top, a control strip pinned below it. */
+    :root {
+      color-scheme: dark;
+      --bg: #0a0910;
+      --panel: #131019;
+      --border: #2b2331;
+      --text: #efe6dc;
+      --muted: #9b8fa0;
+      --accent: #e0702c;
+      --bone: #78e1ff;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; background: var(--bg); }
+    body {
+      color: var(--text);
+      font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      overflow: hidden;
+    }
+    .stage { position: relative; min-height: 0; }
+    #stage { width: 100%; height: 100%; display: block; touch-action: none; }
+    .title {
+      position: absolute; top: 14px;
+      left: max(16px, env(safe-area-inset-left, 0px));
+      right: max(16px, env(safe-area-inset-right, 0px));
+      pointer-events: none;
+      text-shadow: 0 1px 6px #000;
+    }
+    .title h1 { margin: 0; font: 700 18px/1.2 var(--mono); letter-spacing: .12em; }
+    .title p { margin: 4px 0 0; color: var(--muted); max-width: 60ch; }
+    .touch {
+      position: absolute;
+      bottom: max(12px, env(safe-area-inset-bottom, 0px));
+      left: max(16px, env(safe-area-inset-left, 0px));
+      right: max(16px, env(safe-area-inset-right, 0px));
+      display: none; justify-content: space-between; gap: 12px;
+      pointer-events: none;
+    }
+    .touch div { display: flex; gap: 10px; }
+    .touch button {
+      pointer-events: auto;
+      width: 58px; height: 58px; border-radius: 50%;
+      background: rgba(19, 16, 25, .72); color: var(--text);
+      border: 1px solid var(--border); font: 600 13px var(--mono);
+      touch-action: none; user-select: none; -webkit-user-select: none;
+    }
+    .touch button:active { border-color: var(--accent); background: rgba(224, 112, 44, .25); }
+    @media (pointer: coarse) { .touch { display: flex; } }
+    .controls {
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      padding-block: 12px;
+      padding-left: max(16px, env(safe-area-inset-left, 0px));
+      padding-right: max(16px, env(safe-area-inset-right, 0px));
+      display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center;
+    }
+    label { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+    label b { color: var(--text); font-variant-numeric: tabular-nums; min-width: 2ch; }
+    input[type=range] { accent-color: var(--accent); width: 100px; }
+    input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+    select, .controls button {
+      background: #1d1824; color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 10px; font: inherit;
+    }
+    .controls button { cursor: pointer; }
+    .controls button:hover { border-color: var(--accent); }
+    button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .bone { color: var(--bone); }
+    .hint { color: var(--muted); font: 12px var(--mono); margin-left: auto; }
+    @media (pointer: coarse), (max-width: 720px) { .hint { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <canvas id="stage" aria-label="Personagem pixelado animado proceduralmente com efeito de fogo"></canvas>
+    <div class="title">
+      <h1>FIRE WALKER</h1>
+      <p>Nenhum quadro desenhado à mão: um esqueleto de 11 pontos, senos e IK, rasterizado em 192×108. A silhueta vira a fonte de calor do fogo do DOOM.</p>
+    </div>
+    <div class="touch" aria-hidden="true">
+      <div>
+        <button data-hold="ArrowLeft">◀</button>
+        <button data-hold="ArrowRight">▶</button>
+      </div>
+      <div>
+        <button data-hold="Run">Correr</button>
+        <button data-hold="ArrowUp">Pular</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label>Efeito
+      <select id="effect">
+        <option value="aura" selected>Aura</option>
+        <option value="trail">Rastro</option>
+        <option value="none">Nenhum</option>
+      </select>
+    </label>
+    <label>Paleta
+      <select id="palette">
+        <option value="fogo" selected>Fogo</option>
+        <option value="energia">Energia</option>
+        <option value="veneno">Veneno</option>
+        <option value="sombra">Sombra</option>
+      </select>
+    </label>
+    <label>Chamas <input id="flames" type="range" min="1" max="4" step="1" value="2" /> <b id="flamesVal">2</b></label>
+    <label>Passo <input id="step" type="range" min="0" max="6" step="1" value="3" /> <b id="stepVal">3</b></label>
+    <label>Velocidade <input id="speed" type="range" min="12" max="45" step="1" value="28" /> <b id="speedVal">28</b></label>
+    <label><input id="skeleton" type="checkbox" /> <span class="bone">Esqueleto</span></label>
+    <label><input id="auto" type="checkbox" checked /> Piloto automático</label>
+    <button id="dissolve">Dissolver</button>
+    <span class="hint">←→ andar · Shift correr · ↑ pular · ↓ agachar · E dissolver · K esqueleto</span>
+  </div>
+
+  <script src="walker.js"></script>
+</body>
+</html>
