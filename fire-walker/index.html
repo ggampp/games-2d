@@ -45,10 +45,10 @@
       display: none; justify-content: space-between; gap: 12px;
       pointer-events: none;
     }
-    .touch div { display: flex; gap: 10px; }
+    .touch div { display: flex; gap: 8px; }
     .touch button {
       pointer-events: auto;
-      width: 58px; height: 58px; border-radius: 50%;
+      width: 54px; height: 54px; border-radius: 50%;
       background: rgba(19, 16, 25, .72); color: var(--text);
       border: 1px solid var(--border); font: 600 13px var(--mono);
       touch-action: none; user-select: none; -webkit-user-select: none;
@@ -72,7 +72,7 @@
       border: 1px solid var(--border); border-radius: 6px;
       padding: 6px 10px; font: inherit;
     }
-    .controls button { cursor: pointer; }
+    .controls button { cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; }
     .controls button:hover { border-color: var(--accent); }
     button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .bone { color: var(--bone); }
@@ -85,7 +85,7 @@
     <canvas id="stage" aria-label="Personagem pixelado animado proceduralmente com efeito de fogo"></canvas>
     <div class="title">
       <h1>FIRE WALKER</h1>
-      <p>Nenhum quadro desenhado à mão: um esqueleto, senos e IK, desenhado em pixels e sombreado a cada quadro. A silhueta vira a fonte de calor do fogo do DOOM.</p>
+      <p>Nenhum quadro desenhado à mão: um esqueleto, senos e IK, desenhado em pixels e sombreado a cada quadro. A silhueta, a magia e as explosões são fontes de calor do fogo do DOOM.</p>
     </div>
     <div class="touch" aria-hidden="true">
       <div>
@@ -94,6 +94,7 @@
       </div>
       <div>
         <button data-hold="Run">Correr</button>
+        <button data-hold="Cast">Magia</button>
         <button data-hold="ArrowUp">Pular</button>
       </div>
     </div>
@@ -102,8 +103,8 @@
   <div class="controls">
     <label>Efeito
       <select id="effect">
-        <option value="aura" selected>Aura</option>
-        <option value="trail">Rastro</option>
+        <option value="aura">Aura</option>
+        <option value="trail" selected>Rastro</option>
         <option value="none">Nenhum</option>
       </select>
     </label>
@@ -121,8 +122,9 @@
     <label><input id="shading" type="checkbox" checked /> Sombreado</label>
     <label><input id="skeleton" type="checkbox" /> <span class="bone">Esqueleto</span></label>
     <label><input id="auto" type="checkbox" checked /> Piloto automático</label>
+    <button id="cast" data-hold="Cast" title="Segure para carregar, solte para lançar">Magia (segure)</button>
     <button id="dissolve">Dissolver</button>
-    <span class="hint">←→ andar · Shift correr · ↑ pular · ↓ agachar · E dissolver · K esqueleto</span>
+    <span class="hint">←→ andar · Shift correr · ↑ pular · ↓ agachar · F segurar: magia · E dissolver · K esqueleto</span>
   </div>
 
   <script src="walker.js"></script>

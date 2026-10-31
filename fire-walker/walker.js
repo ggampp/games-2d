@@ -8,6 +8,8 @@
 // 3. The character's silhouette is the heat source of the DOOM fire algorithm:
 //    aura (every pixel burns), trail (burns only while moving) and dissolve/teleport.
 //    The fire also rim-lights the character's edges.
+// 4. A chargeable spell: the orb, the bolt, its explosion and the embers are all heat
+//    sources for the same fire, aimed at a straw training dummy.
 
 'use strict';
 
@@ -25,7 +27,7 @@ const BODY = { thigh: 10, shin: 10, torso: 13, headR: 4.6, upperArm: 7, foreArm:
 const LEG = BODY.thigh + BODY.shin;
 
 const cfg = {
-  effect: 'aura',   // aura | trail | none
+  effect: 'trail',  // aura | trail | none
   palette: 'fogo',
   decay: 3,         // fire heat lost per row (lower = taller flames)
   step: 4,          // foot lift in pixels
@@ -90,6 +92,9 @@ const MATERIALS = {
   metal:   ['#3c3f4a', '#6d7282', '#a3a9bb', '#eef1f8'],
   steel:   ['#1f2129', '#3b3f4c', '#5d6373', '#8d94a6'],
   scarf:   ['#6a2410', '#a8441e', '#d8672b', '#f69b4c'],
+  straw:   ['#4a3a1c', '#7a6230', '#a88a46', '#d6b86c'],
+  wood:    ['#21150d', '#3d2817', '#5e3f24', '#83603a'],
+  rope:    ['#3a2f22', '#6b5a40', '#97815c', '#c4ad82'],
   white:   ['#f4efe6', '#f4efe6', '#f4efe6', '#f4efe6'],
   pupil:   ['#120d14', '#120d14', '#120d14', '#120d14'],
   lid:     ['#9c5f47', '#9c5f47', '#9c5f47', '#9c5f47'],
@@ -101,6 +106,8 @@ const MAT32 = MAT_NAMES.map((n) => MATERIALS[n].map((h) => pack(hexRgb(h))));
 const MAT_FLAT = MAT_NAMES.map((n) => FLAT.has(n));
 const OUTLINE32 = pack(hexRgb('#0b080d'));
 const GLOW32 = pack(hexRgb('#fff6d8'));
+const PAL32 = Object.fromEntries(Object.entries(PALETTES).map(([k, p]) =>
+  [k, Uint32Array.from({ length: MAX_HEAT + 1 }, (_, i) => pack([p[i * 3], p[i * 3 + 1], p[i * 3 + 2]]))]));
 
 // ---------------------------------------------------------------------------
 // Small math helpers
@@ -151,7 +158,7 @@ const DIS_GAP = 0.35;
 const DIS_IN = 0.7;
 
 function startDissolve() {
-  if (dissolve.state === 'none') { dissolve.state = 'out'; dissolve.t = 0; }
+  if (dissolve.state === 'none' && spell.state === 'idle') { dissolve.state = 'out'; dissolve.t = 0; }
 }
 
 function resetSecondary(x) {
@@ -182,7 +189,7 @@ let jumpBuffer = 0;
 let landingBurst = 0;
 
 function updateCharacter(dt, input) {
-  const busy = dissolve.state !== 'none';
+  const busy = dissolve.state !== 'none' || spell.state !== 'idle';
   const dir = busy ? 0 : input.dir;
   const crouching = !busy && input.crouch && ch.onGround;
   const runSpeed = cfg.walk * 2.1;
@@ -227,11 +234,150 @@ function updateCharacter(dt, input) {
 }
 
 // ---------------------------------------------------------------------------
+// Spell: hold to charge an orb in the hand, release to throw it
+// ---------------------------------------------------------------------------
+const spell = { state: 'idle', t: 0, power: 0, release: false, launched: false };
+const CHARGE_MIN = 0.22;   // shortest wind-up, even for a tap
+const CHARGE_FULL = 1.0;   // seconds to full power
+const RELEASE_T = 0.14;
+const RECOVER_T = 0.35;
+const bolts = [];
+const embers = [];
+const blasts = [];
+let shake = 0;
+
+const dummy = { x: W - 52, ang: 0, angV: 0, burn: 0, hits: 0 };
+
+const orbRadius = () => 1.2 + spell.power * 2.6;
+
+function updateSpell(dt, held) {
+  const s = spell;
+  if (s.state === 'idle') {
+    if (held && dissolve.state === 'none') {
+      s.state = 'charge'; s.t = 0; s.power = 0; s.release = false; s.launched = false;
+    }
+    return;
+  }
+  s.t += dt;
+  if (s.state === 'charge') {
+    s.power = clamp(s.t / CHARGE_FULL, 0, 1);
+    if (!held) s.release = true;
+    if (pose && Math.random() < 0.45 + s.power * 0.5) spawnInward();
+    if (s.release && s.t >= CHARGE_MIN) { s.state = 'release'; s.t = 0; }
+  } else if (s.state === 'release') {
+    if (!s.launched && s.t >= 0.05) { launch(); s.launched = true; }
+    if (s.t >= RELEASE_T) { s.state = 'recover'; s.t = 0; }
+  } else if (s.state === 'recover' && s.t >= RECOVER_T) {
+    s.state = 'idle'; s.t = 0;
+  }
+}
+
+// Sparks sucked into the hand while charging.
+function spawnInward() {
+  const [hx, hy] = pose.hand;
+  const a = Math.random() * Math.PI * 2;
+  const d = 9 + Math.random() * 7;
+  const life = 0.18 + Math.random() * 0.1;
+  const x = hx + Math.cos(a) * d;
+  const y = hy + Math.sin(a) * d;
+  embers.push({ x, y, vx: (hx - x) / life, vy: (hy - y) / life, life, heat: 22 + spell.power * 10, g: 0 });
+}
+
+function launch() {
+  const f = ch.facing;
+  const [hx, hy] = pose.hand;
+  const p = spell.power;
+  bolts.push({ x: hx + f * 2, y: hy, y0: hy, vx: f * (150 + p * 90), r: 1.8 + p * 2.6, age: 0, sx: hx, sy: hy, power: p });
+  ch.vx = -f * (18 + 30 * p); // recoil
+  shake = Math.max(shake, 0.5 + p);
+}
+
+function impact(b, onDummy) {
+  b.dead = true;
+  const dir = Math.sign(b.vx);
+  blasts.push({ x: b.x, y: b.y, t: 0, R: 6 + b.power * 10 });
+  const n = 12 + Math.round(b.power * 20);
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI * Math.random();
+    const sp = (50 + Math.random() * 110) * (0.6 + b.power * 0.7);
+    embers.push({
+      x: b.x, y: b.y,
+      vx: Math.cos(a) * sp - dir * 25, vy: Math.sin(a) * sp - 20,
+      life: 0.5 + Math.random() * 0.9, heat: 30 + ((Math.random() * 6) | 0), g: 1,
+    });
+  }
+  shake = Math.max(shake, 1.5 + b.power * 2.5);
+  if (onDummy) {
+    dummy.angV += dir * (4 + b.power * 6);
+    dummy.burn = Math.max(dummy.burn, 1.6 + b.power * 1.8);
+    dummy.hits++;
+  }
+}
+
+function updateProjectiles(dt) {
+  for (const b of bolts) {
+    b.age += dt;
+    b.x += b.vx * dt;
+    b.y = b.y0 + Math.sin(b.age * 18) * 0.6;
+    const toDummy = dummy.x - b.x;
+    if (Math.abs(toDummy) < 6 && b.y > GROUND - 40 && b.y < GROUND - 6) impact(b, true);
+    else if (b.x < 2 || b.x > W - 3 || b.age > 3) impact(b, false);
+  }
+  for (let i = bolts.length - 1; i >= 0; i--) if (bolts[i].dead) bolts.splice(i, 1);
+
+  for (const e of embers) {
+    e.life -= dt;
+    if (e.g) e.vy += 240 * dt;
+    e.x += e.vx * dt;
+    e.y += e.vy * dt;
+    if (e.g && e.y >= GROUND - 1) { e.y = GROUND - 1; e.vy *= -0.35; e.vx *= 0.6; }
+  }
+  for (let i = embers.length - 1; i >= 0; i--) {
+    const e = embers[i];
+    if (e.life <= 0 || e.x < 0 || e.x >= W || e.y < 0) embers.splice(i, 1);
+  }
+
+  for (const bl of blasts) bl.t += dt;
+  for (let i = blasts.length - 1; i >= 0; i--) if (blasts[i].t > 0.35) blasts.splice(i, 1);
+
+  // Dummy: a damped spring around its base.
+  dummy.angV += (-dummy.ang * 90 - dummy.angV * 5) * dt;
+  dummy.ang += dummy.angV * dt;
+  dummy.burn = Math.max(0, dummy.burn - dt);
+  shake = Math.max(0, shake - dt * 7);
+}
+
+// ---------------------------------------------------------------------------
 // Pose: a handful of sines + IK -> joint positions
 // ---------------------------------------------------------------------------
 let pose = null;
 
+// Target angles for the cast: [front arm, back arm]. Angles are measured from
+// straight down, positive = toward where the character faces.
+// Charge: both hands cupped in front of the chest around the orb.
+const CAST_CHARGE = { ua: [0.5, 0.75], fa: [1.9, 2.15], lean: -0.04, lunge: 0.25 };
+const CAST_RELEASE = { ua: [1.5, -0.5], fa: [1.55, -0.2], lean: 0.3, lunge: 1 };
+
+function castBlend() {
+  const s = spell;
+  if (s.state === 'charge') return { k: easeInOut(clamp(s.t / 0.18, 0, 1)), ...CAST_CHARGE };
+  if (s.state === 'release') {
+    const u = easeInOut(clamp(s.t / 0.07, 0, 1));
+    return {
+      k: 1,
+      ua: CAST_CHARGE.ua.map((v, i) => lerp(v, CAST_RELEASE.ua[i], u)),
+      fa: CAST_CHARGE.fa.map((v, i) => lerp(v, CAST_RELEASE.fa[i], u)),
+      lean: lerp(CAST_CHARGE.lean, CAST_RELEASE.lean, u),
+      lunge: lerp(CAST_CHARGE.lunge, CAST_RELEASE.lunge, u),
+    };
+  }
+  if (s.state === 'recover') return { k: 1 - easeInOut(clamp(s.t / RECOVER_T, 0, 1)), ...CAST_RELEASE };
+  return null;
+}
+
 function computePose(t) {
+  const cast = castBlend();
+  const ck = cast ? cast.k : 0;
   const f = ch.facing;
   const speed = Math.abs(ch.vx);
   const a = Math.min(1, speed / cfg.walk);                       // 0 idle .. 1 walking
@@ -243,12 +389,13 @@ function computePose(t) {
   const bob = -Math.cos(2 * ch.phase) * (0.7 + run * 0.8) * a * ground;
   const breathe = Math.sin(t * 2.2) * (1 - a);
   const hipX = ch.x;
-  const hipY = ch.y - LEG * 0.93 + crouch * 6.5 + bob;
+  const hipY = ch.y - LEG * 0.93 + crouch * 6.5 + bob + (cast ? cast.lunge * ck * 2 : 0);
 
   const legs = [];
   for (let i = 0; i < 2; i++) {
     const ph = ch.phase + i * Math.PI;
-    const stand = i === 0 ? 2 : -1.7;
+    let stand = i === 0 ? 2 : -1.7;
+    if (cast) stand = lerp(stand, i === 0 ? 5 : -4.5, cast.lunge * ck); // plant the feet
     const off = -Math.cos(ph) * (ch.stride / 2) * a + stand * (1 - a);
     const lift = Math.max(0, Math.sin(ph)) * cfg.step * (1 + run * 0.6) * a;
     let fx = hipX + f * off;
@@ -259,7 +406,8 @@ function computePose(t) {
     legs.push(ik(hipX, hipY, fx, fy, BODY.thigh, BODY.shin, f));
   }
 
-  const lean = 0.06 + a * 0.1 + run * 0.22 - air * 0.05 + crouch * 0.25;
+  let lean = 0.06 + a * 0.1 + run * 0.22 - air * 0.05 + crouch * 0.25;
+  if (cast) lean = lerp(lean, cast.lean, ck);
   const up = [f * Math.sin(lean), -Math.cos(lean)];  // torso axis
   const fw = [f * Math.cos(lean), Math.sin(lean)];   // torso "forward"
   const T = BODY.torso;
@@ -281,12 +429,18 @@ function computePose(t) {
     let fa = ua + 0.35 + run * 0.9 + crouch * 0.6;
     ua = lerp(ua, i === 0 ? 2.3 : 1.9, air * 0.85);
     fa = lerp(fa, i === 0 ? 2.8 : 2.4, air * 0.85);
+    if (cast) { ua = lerp(ua, cast.ua[i], ck); fa = lerp(fa, cast.fa[i], ck); }
     const ex = shX + f * Math.sin(ua) * BODY.upperArm;
     const ey = shY + Math.cos(ua) * BODY.upperArm;
     arms.push({ sx: shX, sy: shY, ex, ey, hx: ex + f * Math.sin(fa) * BODY.foreArm, hy: ey + Math.cos(fa) * BODY.foreArm });
   }
 
-  pose = { f, hipX, hipY, neckX, neckY, headX, headY, legs, arms, up, fw, run, a, breathe };
+  // Where the orb sits: just past the front fist.
+  const fa0 = arms[0];
+  const fd = Math.hypot(fa0.hx - fa0.ex, fa0.hy - fa0.ey) || 1;
+  const hand = [fa0.hx + ((fa0.hx - fa0.ex) / fd) * 2.4, fa0.hy + ((fa0.hy - fa0.ey) / fd) * 2.4];
+
+  pose = { f, hipX, hipY, neckX, neckY, headX, headY, legs, arms, up, fw, run, a, breathe, hand };
   return pose;
 }
 
@@ -346,6 +500,8 @@ const mask = new Uint8Array(W * H);  // 0 empty, 1 body, 2 outline
 const col = new Uint32Array(W * H);  // final character color
 const partMat = new Uint8Array(64);
 const partBack = new Uint8Array(64);
+const partProp = new Uint8Array(64); // 1 = training dummy, 0 = character
+let drawingProp = false;
 let partCount = 0;
 let bbox = { minY: 0, maxY: 0 };
 
@@ -353,6 +509,7 @@ function part(material, back = false) {
   partCount++;
   partMat[partCount] = MAT_INDEX[material];
   partBack[partCount] = back ? 1 : 0;
+  partProp[partCount] = drawingProp ? 1 : 0;
   return partCount;
 }
 
@@ -437,11 +594,40 @@ function drawLeg(leg, f, back) {
   if (!back) disk(knee[0] + f * 0.6, knee[1], 1.5, part('leather')); // knee pad
 }
 
+// Straw training dummy on a post; it tilts around its base like a spring.
+function drawDummy() {
+  drawingProp = true;
+  const a = dummy.ang;
+  const P = (dx, dy) => [dummy.x + dx * Math.cos(a) - dy * Math.sin(a), GROUND - 0.5 + dx * Math.sin(a) + dy * Math.cos(a)];
+  seg(P(0, 0), P(0, -34), 1.5, 1.2, part('wood'));                 // post
+  seg(P(-9, -24), P(9, -24), 1.0, 1.0, part('wood'));               // crossbar
+  disk(...P(-9.6, -24), 1.4, part('straw'));                        // straw hands
+  disk(...P(9.6, -24), 1.4, part('straw'));
+  poly([P(-5, -12), P(5, -12), P(6.2, -27.5), P(-6.2, -27.5)], part('straw')); // sack
+  seg(P(-5.6, -17.5), P(5.6, -17.5), 0.6, 0.6, part('rope'));      // rope belt
+  seg(P(-4.5, -12.2), P(4.5, -12.2), 0.5, 0.5, part('rope'));      // hem
+  disk(...P(0, -32.2), 4.3, part('straw'));                        // head
+  seg(P(0, -36), P(1.8, -39), 0.8, 0.4, part('straw'));            // tuft
+  seg(P(-3.8, -29.5), P(3.8, -29.5), 0.5, 0.5, part('rope'));      // neck tie
+  const eye = part('pupil');
+  plot(...P(-1.6, -33), eye);
+  plot(...P(1.6, -33), eye);
+  const mouth = part('rope');
+  for (let k = -1; k <= 1; k++) plot(...P(k, -30.8), mouth);
+  drawingProp = false;
+}
+
 function rasterize() {
   pbuf.fill(0);
   mask.fill(0);
   partCount = 0;
-  if (dissolve.state === 'gap') { bbox = { minY: 0, maxY: 0 }; return; }
+  drawDummy();
+  if (dissolve.state !== 'gap') drawCharacter();
+  shade();
+  applyDissolve();
+}
+
+function drawCharacter() {
   const { f, legs, arms } = pose;
   const T = BODY.torso;
 
@@ -534,9 +720,6 @@ function rasterize() {
     const d = Math.hypot(a.ex - a.sx, a.ey - a.sy) || 1;
     disk(a.sx + ((a.ex - a.sx) / d) * 1.4, a.sy + ((a.ey - a.sy) / d) * 1.4, 2.2, part('steel'));
   }
-
-  shade();
-  applyDissolve();
 }
 
 // Light comes from the moon (upper right). Each pixel picks one of 4 tones:
@@ -563,13 +746,23 @@ function shade() {
           else if (dn !== p || lf !== p) s = 1;
           if (partBack[p]) s = Math.max(0, s - 1);
         }
-        mask[i] = 1;
+        const prop = partProp[p];
+        mask[i] = prop ? 3 : 1;
         col[i] = MAT32[m][s];
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-      } else if (pbuf[i - 1] || pbuf[i + 1] || pbuf[i - W] || pbuf[i + W]) {
-        mask[i] = 2;
-        col[i] = OUTLINE32;
+        if (!prop) {
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      } else {
+        const l = pbuf[i - 1];
+        const r = pbuf[i + 1];
+        const u = pbuf[i - W];
+        const d = pbuf[i + W];
+        if (l || r || u || d) {
+          const charNear = (l && !partProp[l]) || (r && !partProp[r]) || (u && !partProp[u]) || (d && !partProp[d]);
+          mask[i] = charNear ? 2 : 4;
+          col[i] = OUTLINE32;
+        }
       }
     }
   }
@@ -579,6 +772,7 @@ function shade() {
 // Dissolve / materialize: a horizontal cut sweeps the sprite; the cut line burns.
 function applyDissolve() {
   if (dissolve.state !== 'out' && dissolve.state !== 'in') return;
+  if (bbox.maxY < bbox.minY) return;
   const out = dissolve.state === 'out';
   const span = bbox.maxY - bbox.minY + 2;
   const k = easeInOut(clamp(dissolve.t / (out ? DIS_OUT : DIS_IN), 0, 1));
@@ -586,7 +780,7 @@ function applyDissolve() {
   for (let y = Math.max(0, bbox.minY); y <= Math.min(H - 1, bbox.maxY); y++) {
     for (let x = 0; x < W; x++) {
       const i = y * W + x;
-      if (!mask[i]) continue;
+      if (mask[i] !== 1 && mask[i] !== 2) continue;
       const edge = out ? y >= cut - 2 && y < cut : y >= cut && y < cut + 1.5;
       if (edge) fire[i] = MAX_HEAT;
       if (y < cut) mask[i] = 0;
@@ -617,10 +811,70 @@ function fireStep() {
   }
 }
 
+function fireDisk(cx, cy, r, heat) {
+  for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++) {
+    if (y < 0 || y >= H) continue;
+    for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) {
+      if (x < 0 || x >= W) continue;
+      const dx = x - cx;
+      const dy = y - cy;
+      const i = y * W + x;
+      if (dx * dx + dy * dy <= r * r && fire[i] < heat) fire[i] = heat;
+    }
+  }
+}
+
+function fireRing(cx, cy, r, w, heat) {
+  const R2 = r + w;
+  for (let y = Math.floor(cy - R2); y <= Math.ceil(cy + R2); y++) {
+    if (y < 0 || y >= H) continue;
+    for (let x = Math.floor(cx - R2); x <= Math.ceil(cx + R2); x++) {
+      if (x < 0 || x >= W) continue;
+      const d = Math.hypot(x - cx, y - cy);
+      const i = y * W + x;
+      if (d >= r - w && d <= r + w && fire[i] < heat) fire[i] = heat;
+    }
+  }
+}
+
+function seedSpell() {
+  // Orb in the hand (until it leaves).
+  if (spell.state === 'charge' || (spell.state === 'release' && !spell.launched)) {
+    fireDisk(pose.hand[0], pose.hand[1], orbRadius() * 1.1, Math.round(22 + spell.power * 14));
+  }
+  // Bolts burn a continuous line from where they were last seeded.
+  for (const b of bolts) {
+    const n = Math.ceil(Math.abs(b.x - b.sx)) + 1;
+    for (let k = 0; k <= n; k++) fireDisk(lerp(b.sx, b.x, k / n), lerp(b.sy, b.y, k / n), b.r * 0.9, MAX_HEAT);
+    b.sx = b.x; b.sy = b.y;
+  }
+  for (const e of embers) {
+    const x = Math.round(e.x);
+    const y = Math.round(e.y);
+    if (x >= 0 && x < W && y >= 0 && y < H) {
+      const i = y * W + x;
+      const heat = Math.round(e.heat * Math.min(1, e.life * 2.5));
+      if (fire[i] < heat) fire[i] = heat;
+    }
+  }
+  for (const bl of blasts) {
+    const k = easeInOut(clamp(bl.t / 0.35, 0, 1));
+    const r = lerp(2, bl.R, k);
+    if (bl.t < 0.12) fireDisk(bl.x, bl.y, r, MAX_HEAT);
+    else fireRing(bl.x, bl.y, r, 1.2, Math.round(MAX_HEAT * (1 - k * 0.4)));
+  }
+  // A burning dummy is its own heat source for a while.
+  if (dummy.burn > 0) {
+    const heat = Math.round(18 + 18 * Math.min(1, dummy.burn / 1.5));
+    for (let i = 0; i < mask.length; i++) if ((mask[i] === 3 || mask[i] === 4) && fire[i] < heat && Math.random() < 0.6) fire[i] = heat;
+  }
+}
+
 function seedFire() {
   const speed = Math.abs(ch.vx);
-  fireBias = speed > 10 ? -ch.facing : 0;
-  if (dissolve.state !== 'none') return; // the dissolve seeds its own cut line
+  fireBias = speed > 10 && spell.state === 'idle' ? -ch.facing : 0;
+  seedSpell();
+  if (dissolve.state !== 'none') { landingBurst = 0; return; } // the dissolve seeds its own cut line
 
   let heat = 0;
   if (cfg.effect === 'aura') heat = MAX_HEAT;
@@ -629,7 +883,7 @@ function seedFire() {
     heat = k > 0.25 ? Math.round(14 + 22 * k) : 0;
   }
   if (heat) {
-    for (let i = 0; i < mask.length; i++) if (mask[i] && fire[i] < heat) fire[i] = heat;
+    for (let i = 0; i < mask.length; i++) if ((mask[i] === 1 || mask[i] === 2) && fire[i] < heat) fire[i] = heat;
   }
   if (landingBurst > 0 && cfg.effect !== 'none') {
     const row = (GROUND - 1) * W;
@@ -639,6 +893,47 @@ function seedFire() {
     }
   }
   landingBurst = 0;
+}
+
+// ---------------------------------------------------------------------------
+// FX layer: opaque palette-colored cores (orb, bolts, embers, blast flash)
+// drawn in front of the character. The fire around them is the glow.
+// ---------------------------------------------------------------------------
+const fx = new Uint8Array(W * H);
+
+function fxDisk(cx, cy, r, edge) {
+  for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++) {
+    if (y < 0 || y >= H) continue;
+    for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) {
+      if (x < 0 || x >= W) continue;
+      const d = Math.hypot(x - cx, y - cy);
+      if (d > r) continue;
+      const v = Math.round(lerp(MAX_HEAT, edge, d / Math.max(r, 0.01))) - ((Math.random() * 3) | 0);
+      const i = y * W + x;
+      if (fx[i] < v) fx[i] = v;
+    }
+  }
+}
+
+function buildFx() {
+  fx.fill(0);
+  if (spell.state === 'charge' || (spell.state === 'release' && !spell.launched)) {
+    const r = orbRadius() + Math.sin(simTime * 40) * 0.25;
+    fxDisk(pose.hand[0], pose.hand[1], r, 20);
+  }
+  for (const b of bolts) {
+    const dir = Math.sign(b.vx);
+    fxDisk(b.x - dir * b.r * 0.9, b.y, b.r * 0.75, 18);
+    fxDisk(b.x, b.y, b.r, 22);
+  }
+  for (const e of embers) {
+    const x = Math.round(e.x);
+    const y = Math.round(e.y);
+    if (x >= 0 && x < W && y >= 0 && y < H) fx[y * W + x] = Math.max(fx[y * W + x], Math.round(e.heat * Math.min(1, e.life * 3)));
+  }
+  for (const bl of blasts) {
+    if (bl.t < 0.09) fxDisk(bl.x, bl.y, bl.R * 0.55 * (1 - bl.t / 0.09) + 2, 24);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -736,19 +1031,22 @@ function compose() {
   const rx = 11 * (1 - rise * 0.6);
   const shadowK = 0.55 * visible * (1 - rise * 0.5);
 
+  const fxPal = PAL32[cfg.palette];
+  const isOutline = (j) => mask[j] === 2 || mask[j] === 4;
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const i = y * W + x;
+      if (fx[i]) { frame32[i] = fxPal[fx[i]]; continue; }
       const m = mask[i];
       if (m) {
         let c = col[i];
         // Rim light: body pixels next to burning outline pick up the fire color.
-        if (m === 1) {
+        if (m === 1 || m === 3) {
           let h = 0;
-          if (mask[i - 1] === 2 && fire[i - 1] > h) h = fire[i - 1];
-          if (mask[i + 1] === 2 && fire[i + 1] > h) h = fire[i + 1];
-          if (mask[i - W] === 2 && fire[i - W] > h) h = fire[i - W];
-          if (mask[i + W] === 2 && fire[i + W] > h) h = fire[i + W];
+          if (isOutline(i - 1) && fire[i - 1] > h) h = fire[i - 1];
+          if (isOutline(i + 1) && fire[i + 1] > h) h = fire[i + 1];
+          if (isOutline(i - W) && fire[i - W] > h) h = fire[i - W];
+          if (isOutline(i + W) && fire[i + W] > h) h = fire[i + W];
           // Use a mid-palette tone (orange, not white) so the rim warms the edge without washing it out.
           if (h > 12 && c !== GLOW32) {
             const k = Math.min(h, 24);
@@ -799,7 +1097,8 @@ function draw() {
     camX = camX === null ? target : lerp(camX, target, 0.08);
     ox = Math.round(clamp(camX, cw - dw, 0));
   }
-  view = { s, ox, oy: Math.round((chh - dh) / 2) };
+  const sh = shake * s * 0.7;
+  view = { s, ox: ox + Math.round((Math.random() - 0.5) * sh), oy: Math.round((chh - dh) / 2 + (Math.random() - 0.5) * sh) };
   ctx.fillStyle = '#0a0910';
   ctx.fillRect(0, 0, cw, chh);
   ctx.imageSmoothingEnabled = false;
@@ -866,7 +1165,7 @@ function fitCanvas() {
 // ---------------------------------------------------------------------------
 const keys = new Set();
 let jumpPressed = false;
-const MOVE_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD', 'KeyW', 'KeyS', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyE']);
+const MOVE_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD', 'KeyW', 'KeyS', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyE', 'KeyF', 'KeyQ']);
 
 function takeControl() {
   if (cfg.auto) { cfg.auto = false; ui.auto.checked = false; }
@@ -907,19 +1206,33 @@ function keyboardInput() {
     run: keys.has('ShiftLeft') || keys.has('ShiftRight') || keys.has('Run'),
     crouch: keys.has('ArrowDown') || keys.has('KeyS'),
     jump: jumpPressed,
+    cast: keys.has('KeyF') || keys.has('KeyQ') || keys.has('Cast'),
   };
   jumpPressed = false;
   return input;
 }
 
-const ai = { target: null, wait: 1.2, run: false, crouch: false, jumpCd: 2.5, disCd: 7 };
+const ai = { target: null, wait: 0.4, run: false, crouch: false, jumpCd: 2.5, disCd: 12, spellCd: 0, casting: 0 };
 
 function autopilotInput(dt) {
   ai.jumpCd -= dt;
   ai.disCd -= dt;
-  const idle = { dir: 0, run: false, crouch: ai.crouch, jump: false };
-  if (dissolve.state !== 'none') return idle;
-  if (ai.wait > 0) { ai.wait -= dt; return idle; }
+  ai.spellCd -= dt;
+  const idle = { dir: 0, run: false, crouch: ai.crouch, jump: false, cast: false };
+  if (ai.casting > 0) { ai.casting -= dt; return { ...idle, crouch: false, cast: true }; }
+  if (dissolve.state !== 'none' || spell.state !== 'idle') return idle;
+  if (ai.wait > 0) {
+    ai.wait -= dt;
+    // Turn to the dummy and throw a spell, holding it a random time to vary the power.
+    if (ai.spellCd < 0 && Math.abs(dummy.x - ch.x) > 28) {
+      ch.facing = Math.sign(dummy.x - ch.x);
+      ai.casting = 0.25 + Math.random() * 0.9;
+      ai.spellCd = 2.5 + Math.random() * 3;
+      ai.crouch = false;
+      return { ...idle, cast: true };
+    }
+    return idle;
+  }
   if (ai.target === null) {
     ai.target = 20 + Math.random() * (W - 40);
     ai.run = Math.random() < 0.4;
@@ -935,7 +1248,7 @@ function autopilotInput(dt) {
   }
   let jump = false;
   if (ai.jumpCd < 0 && Math.random() < dt * 0.7) { jump = true; ai.jumpCd = 1.5 + Math.random() * 2; }
-  return { dir: Math.sign(d), run: ai.run, crouch: false, jump };
+  return { dir: Math.sign(d), run: ai.run, crouch: false, jump, cast: false };
 }
 
 // ---------------------------------------------------------------------------
@@ -981,10 +1294,13 @@ let tickCount = 0;
 function tick() {
   const input = cfg.auto ? autopilotInput(DT) : keyboardInput();
   updateCharacter(DT, input);
+  updateSpell(DT, input.cast);
   updateDissolve(DT);
   computePose(simTime);
   updateSecondary(simTime, DT);
+  updateProjectiles(DT);
   rasterize();
+  buildFx();
   if (tickCount % 2 === 0) {
     fireStep();
     seedFire();
