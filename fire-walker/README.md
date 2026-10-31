@@ -14,6 +14,7 @@ npx serve .        # ou: python3 -m http.server
 
 | Arquivo | Responsabilidade |
 |---|---|
+| `audio.js` | Áudio procedural (Web Audio API): efeitos sonoros sintetizados e o sequenciador de música |
 | `walker.js` | Núcleo: configuração, paletas, herói (física, pose, desenho do Andarilho), magia, rasterização por id de parte e sombreamento, simulação do fogo |
 | `heroes.js` | Personagens jogáveis: atributos, movimento secundário, desenho da Bruxa e do Paladino, e as magias de cada um |
 | `enemies.js` | Tipos de inimigo, ondas, vida, golpes, queima, projéteis e onda de choque |
@@ -148,6 +149,34 @@ Ao chegar ao fim do portão, a câmera trava na arena, o caminho de volta fecha 
 | **Chuva de meteoros**: espada erguida; marcas brilham no chão e os meteoros caem nelas | Sair de cima das marcas |
 
 Com metade da vida ele entra em **fúria**: a espada pega fogo e ele anda e ataca mais rápido. Ele sente cada golpe (flash e brasas), mas só **cambaleia** com tiros carregados, e depois de um cambaleio fica 4 s sem cambalear de novo. Ao morrer, cai de joelhos e queima devagar até virar cinza, com "Vitória!". Se você voltar depois de 40 s, ele aparece de novo. A barra de vida dele, com o nome, fica embaixo da tela.
+
+### 11. Som e música
+
+Não há nenhum arquivo de som: tudo é sintetizado na hora com a Web Audio API, a partir de osciladores e ruído filtrado, com um eco (reverb) gerado e um compressor na saída. O navegador só libera o áudio depois de um clique ou de uma tecla, por isso aparece o botão **Ativar som**.
+
+**Música**: um pequeno sequenciador que compõe enquanto toca, agendando as notas um pouco à frente do tempo.
+
+| Momento | Música |
+|---|---|
+| Exploração (70 BPM) | Acordes longos em ré menor (Rém, Si♭, Fá, Dó) com sintetizadores levemente desafinados, baixo nos tempos 1 e 3, batida grave de coração e notas de sino aleatórias da pentatônica, com eco |
+| Arena do chefe (132 BPM) | Bumbo, caixa e chimbal, baixo pulsante em colcheias, acordes curtos e um coro de senoides com vibrato, numa progressão com Lá maior para criar tensão |
+| Fúria (146 BPM) | Mais rápida, com chimbal em semicolcheias |
+| Vitória | Fanfarra em ré maior; depois volta a música de exploração |
+
+Quando o herói cai, a música é abafada por um filtro por alguns segundos.
+
+**Efeitos**: cada um é posicionado no estéreo conforme onde acontece e fica mais baixo fora da tela.
+
+| Grupo | Sons |
+|---|---|
+| Herói | Passos a cada pisada, pulo, aterrissagem, golpe recebido (voz diferente para cada personagem; o Paladino tem o tilintar da armadura), queda, renascer, dissolver e materializar |
+| Magias | Zumbido de carga que sobe de tom com a carga; bola de fogo, fogos-fátuos (um sino por projétil) e onda de chamas; explosões proporcionais à força |
+| Inimigos | Cada tipo tem voz própria ao sentir o golpe e ao morrer (rosnado do carniçal, guincho do morcego, coro dissonante do cultista, urro do brutamontes), o som de pegar fogo, o orbe do cultista e o pisão do brutamontes |
+| Fogo | Um crepitar contínuo que fica mais intenso com a quantidade de inimigos queimando, os braseiros próximos e a aura |
+| Chefe | Gongo e rugido na entrada, corte da espada, pisão, assobio dos meteoros, rugido da fúria, estrondo longo na morte |
+| Ondas | Um gongo a cada onda nova |
+
+Em **Som** liga e desliga tudo; **Música** e **Efeitos** ajustam os volumes.
 
 ## Controles
 

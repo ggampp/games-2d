@@ -50,7 +50,7 @@ function selectHero(name) {
   spell.state = 'idle';
   resetSecondary(ch.x);
   // A quick materialize so the swap reads on screen.
-  if (dissolve.state === 'none') { dissolve.state = 'in'; dissolve.t = 0; }
+  if (dissolve.state === 'none') { dissolve.state = 'in'; dissolve.t = 0; sfx('materialize', { x: ch.x }); }
 }
 
 // ---------------------------------------------------------------------------
@@ -72,16 +72,19 @@ function launchHeroSpell() {
     }
     ch.vx = -f * 12;
     shake = Math.max(shake, 0.4);
+    sfx('wisps', { x: ch.x, n });
   } else if (kind === 'flamewave') {
     // A wall of flame that runs along the floor; more charge = farther and taller.
     heroWaves.push({ x0: ch.x + f * 6, x: ch.x + f * 6, dir: f, dist: 0, max: 50 + p * 90, speed: 150 + p * 40, power: p, h: 8 + p * 10, hit: new Set() });
     ch.vx = -f * 10;
     shake = Math.max(shake, 1 + p);
     emberBurst(ch.x + f * 6, GROUND - 2, 8, 0.3);
+    sfx('flamewave', { x: ch.x, power: p });
   } else {
     bolts.push({ x: hx + f * 2, y: hy, y0: hy, vx: f * (150 + p * 90), vy: 0, r: 1.8 + p * 2.6, age: 0, sx: hx, sy: hy, power: p, dmgMul: 1 });
     ch.vx = -f * (18 + 30 * p); // recoil
     shake = Math.max(shake, 0.5 + p);
+    sfx('fireball', { x: ch.x, power: p });
   }
 }
 
