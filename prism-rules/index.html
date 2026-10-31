@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Prism Rules — Level 70: The Assay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div id="game-wrapper">
+    <!-- Top HUD -->
+    <header id="top-hud">
+      <div id="level-title-wrap">
+        <span id="level-label">level 70: the assay</span>
+      </div>
+      <div id="top-actions">
+        <button id="btn-solution" class="hud-btn" title="Load Reference Solution">solution ★</button>
+        <button id="btn-restart" class="hud-btn" title="Restart Level">restart <span class="symbol">↺</span></button>
+        <button id="btn-levels" class="hud-btn" title="Select Level">view all levels <span class="symbol">☰</span></button>
+        <button id="btn-audio" class="hud-btn audio-btn" title="Toggle Sound"><span class="symbol">♪</span></button>
+      </div>
+    </header>
+
+    <!-- Main Canvas Arena with Brick Border -->
+    <div id="arena-container">
+      <canvas id="game-canvas" width="900" height="900"></canvas>
+      <div id="custom-cursor"></div>
+    </div>
+
+    <!-- Bottom Toolbar -->
+    <footer id="bottom-hud">
+      <div id="toolbar">
+        <div class="tool-slot" data-type="prism" id="slot-prism" title="Triangular Prism (Splits white light into rainbow spectrum)">
+          <div class="slot-count" id="count-prism">1</div>
+          <div class="slot-icon">
+            <svg viewBox="0 0 40 40" class="icon-svg">
+              <polygon points="20,8 34,32 6,32" fill="none" stroke="#7be3ff" stroke-width="2.5" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="slot-name">prism</div>
+        </div>
+
+        <div class="tool-slot" data-type="green" id="slot-green" title="Dichroic Green Splitter (Reflects green light, transmits others)">
+          <div class="slot-count" id="count-green">1</div>
+          <div class="slot-icon">
+            <svg viewBox="0 0 40 40" class="icon-svg">
+              <line x1="8" y1="32" x2="32" y2="8" stroke="#ff2a8d" stroke-width="3" stroke-linecap="round"/>
+              <line x1="12" y1="12" x2="28" y2="28" stroke="#39ff84" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="slot-name">green</div>
+        </div>
+
+        <div class="tool-slot" data-type="lens" id="slot-lens" title="Convex Lens (Bends and focuses light rays)">
+          <div class="slot-count" id="count-lens">1</div>
+          <div class="slot-icon">
+            <svg viewBox="0 0 40 40" class="icon-svg">
+              <path d="M 20 6 C 28 14 28 26 20 34 C 12 26 12 14 20 6 Z" fill="none" stroke="#68b4ff" stroke-width="2.2"/>
+            </svg>
+          </div>
+          <div class="slot-name">lens</div>
+        </div>
+
+        <div class="tool-slot" data-type="mirror" id="slot-mirror" title="Flat Mirror (Reflects light beams)">
+          <div class="slot-count" id="count-mirror">2</div>
+          <div class="slot-icon">
+            <svg viewBox="0 0 40 40" class="icon-svg">
+              <rect x="7" y="18" width="26" height="4" rx="2" fill="#ffffff" stroke="#c0d4e8" stroke-width="1"/>
+            </svg>
+          </div>
+          <div class="slot-name">mirror</div>
+        </div>
+      </div>
+
+      <div id="fps-counter">60 fps</div>
+    </footer>
+
+    <!-- Solved Victory Modal -->
+    <div id="modal-solved" class="game-modal hidden">
+      <div class="modal-card">
+        <h2 class="modal-title">solved</h2>
+        <p class="modal-stats" id="solved-stats">5 pieces used · par 5</p>
+        <div class="modal-buttons">
+          <button id="btn-replay" class="modal-btn">replay</button>
+          <button id="btn-freeplay" class="modal-btn">free play</button>
+          <button id="btn-next-level" class="modal-btn highlight">next level →</button>
+        </div>
+        <p class="modal-progress" id="solved-progress">70 of 70 levels complete</p>
+      </div>
+    </div>
+
+    <!-- Level Selector Modal -->
+    <div id="modal-levels" class="game-modal hidden">
+      <div class="modal-card levels-card">
+        <div class="modal-header">
+          <h2 class="modal-title">select level</h2>
+          <button id="btn-close-levels" class="close-btn">✕</button>
+        </div>
+        <div id="levels-grid" class="levels-grid"></div>
+        <div class="modal-footer">
+          <button id="btn-sandbox-mode" class="modal-btn">open free play sandbox</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>

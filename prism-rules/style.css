@@ -1,0 +1,411 @@
+:root {
+  --bg-color: #0c0d12;
+  --playfield-bg: #101217;
+  --brick-border: #444a56;
+  --brick-dark: #272a33;
+  --text-color: #e5eaf2;
+  --hud-dim: #8b95a5;
+  --accent-gold: #ffb834;
+  --accent-blue: #0051ff;
+  --modal-bg: #271a47;
+  --modal-border: #452d7e;
+  --slot-bg: #151820;
+  --slot-border: #282d38;
+  --slot-active: #3c4659;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-color);
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#game-wrapper {
+  position: relative;
+  width: min(94vw, 94vh);
+  height: min(94vw, 94vh);
+  max-width: 900px;
+  max-height: 900px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px 12px;
+}
+
+/* Top HUD */
+#top-hud {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  letter-spacing: -0.2px;
+  margin-bottom: 8px;
+  z-index: 10;
+}
+
+#level-title-wrap {
+  font-weight: 400;
+  color: #f0f3f8;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+#top-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.hud-btn {
+  background: rgba(22, 26, 35, 0.7);
+  border: 1px solid rgba(130, 145, 170, 0.25);
+  color: #cbd5e1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(4px);
+}
+
+.hud-btn:hover {
+  background: rgba(35, 42, 58, 0.9);
+  border-color: rgba(160, 185, 220, 0.5);
+  color: #ffffff;
+}
+
+.hud-btn .symbol {
+  font-size: 14px;
+}
+
+.audio-btn {
+  padding: 4px 8px;
+  font-size: 15px;
+}
+
+/* Arena Container & Canvas */
+#arena-container {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.85);
+  cursor: default;
+}
+
+#game-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: auto;
+}
+
+/* Bottom HUD & Toolbar */
+#bottom-hud {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-top: 10px;
+  z-index: 10;
+}
+
+#toolbar {
+  display: flex;
+  gap: 12px;
+}
+
+.tool-slot {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  background: var(--slot-bg);
+  border: 1.5px solid var(--slot-border);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tool-slot:hover {
+  border-color: #55627a;
+  background: #1c212c;
+  transform: translateY(-2px);
+}
+
+.tool-slot.active {
+  border-color: #4da6ff;
+  box-shadow: 0 0 12px rgba(77, 166, 255, 0.35);
+  background: #202738;
+}
+
+.tool-slot.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.slot-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--accent-blue);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  min-width: 18px;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.slot-count.zero {
+  background: #39404f;
+  color: #8b95a5;
+  border-color: transparent;
+}
+
+.slot-icon {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.icon-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.2));
+}
+
+.slot-name {
+  font-size: 10px;
+  color: #8b95a5;
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+
+#fps-counter {
+  position: absolute;
+  right: 0;
+  bottom: 4px;
+  font-size: 11px;
+  color: #5f6b7c;
+  letter-spacing: 0.5px;
+}
+
+/* Solved Victory Modal */
+.game-modal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(8, 10, 16, 0.65);
+  backdrop-filter: blur(5px);
+  z-index: 100;
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.game-modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.modal-card {
+  background: var(--modal-bg);
+  border: 1.5px solid var(--modal-border);
+  border-radius: 12px;
+  padding: 32px 40px;
+  text-align: center;
+  min-width: 320px;
+  box-shadow: 0 16px 50px rgba(0, 0, 0, 0.75), 0 0 30px rgba(90, 50, 160, 0.3);
+  animation: modalPop 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+@keyframes modalPop {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.modal-title {
+  font-size: 38px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 16px rgba(180, 140, 255, 0.6);
+}
+
+.modal-stats {
+  font-size: 14px;
+  color: #c9bfe4;
+  margin-bottom: 24px;
+  letter-spacing: 0.5px;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.modal-btn {
+  background: #392866;
+  border: 1px solid #5d459c;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modal-btn:hover {
+  background: #4c3785;
+  border-color: #7b5dc7;
+  transform: translateY(-1px);
+}
+
+.modal-btn.highlight {
+  background: #5e3da8;
+  border-color: #926ceb;
+  box-shadow: 0 0 14px rgba(146, 108, 235, 0.4);
+}
+
+.modal-progress {
+  font-size: 12px;
+  color: #8a7aa8;
+}
+
+/* Level Selector Modal */
+.levels-card {
+  max-width: 460px;
+  width: 90%;
+  padding: 24px 28px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.modal-header .modal-title {
+  font-size: 20px;
+  margin-bottom: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #a89bc4;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.close-btn:hover {
+  color: #ffffff;
+}
+
+.levels-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.level-chip {
+  background: #1b1433;
+  border: 1px solid #3d2f63;
+  border-radius: 6px;
+  padding: 10px 6px;
+  color: #d1c8ea;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.level-chip:hover {
+  background: #2f2154;
+  border-color: #6a53a6;
+  color: #ffffff;
+}
+
+.level-chip.active {
+  background: #503494;
+  border-color: #9e7bed;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.level-chip.featured {
+  border-color: #ffb834;
+  box-shadow: 0 0 8px rgba(255, 184, 52, 0.3);
+}
+
+.level-chip .chip-name {
+  font-size: 10px;
+  color: #8c7eaf;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Custom Blue Hand Cursor */
+#custom-cursor {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+  z-index: 50;
+  display: none;
+  transform: translate(-30%, -20%);
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232b6eff" stroke="%23ffffff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0v4"/><path d="M14 10V4a2 2 0 0 0-4 0v7"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>');
+  background-size: contain;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7));
+}
+
+#custom-cursor.grabbing {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%231a55eb" stroke="%23ffffff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V8a2 2 0 0 0-4 0v3"/><path d="M14 10V7a2 2 0 0 0-4 0v4"/><path d="M10 10.5V9a2 2 0 0 0-4 0v5"/><path d="M18 10a2 2 0 0 1 4 2v4a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-2.6-2.6a2 2 0 0 1 2.83-2.82L7 17"/></svg>');
+}
