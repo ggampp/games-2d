@@ -14,6 +14,7 @@
 //    The fire also rim-lights the character's edges.
 // 4. A chargeable spell: the orb, the bolt, its explosion and the embers are all heat
 //    sources for the same fire.
+// Playable characters live in heroes.js and the boss in boss.js.
 // 5. Enemies (enemies.js) feel each hit and catch fire: their own pixels become heat
 //    sources, they char, spread the fire and finally burn away into ash.
 
@@ -43,6 +44,7 @@ const cfg = {
   shading: true,
   skeleton: false,
   auto: true,
+  hero: 'andarilho', // andarilho | bruxa | paladino (heroes.js)
   enemies: 'few',   // off (training dummy) | few | many
 };
 
@@ -115,11 +117,20 @@ const MATERIALS = {
   wing:    ['#1a0f1f', '#2c1a33', '#43284d', '#5e3a6b'],
   batfur:  ['#140c12', '#24161f', '#3a2632', '#56394a'],
   eyecult: ['#d27bff', '#d27bff', '#d27bff', '#d27bff'],
+  hair:    ['#3c3448', '#6a5f7c', '#a397b8', '#ddd3ee'],
+  dress:   ['#0c1a1a', '#14302e', '#1f4a45', '#2f6b62'],
+  stock:   ['#120d14', '#1f1724', '#2c2233', '#3d3046'],
+  cape:    ['#2a0a0e', '#4d1218', '#7a1f26', '#a8333a'],
+  bossplate: ['#100c12', '#1e1820', '#2f2733', '#463b4b'],
+  blade:   ['#3a3f4c', '#6b7386', '#a7b0c4', '#e8eefb'],
+  glass:   ['#7ff0e0', '#7ff0e0', '#7ff0e0', '#7ff0e0'],
+  lips:    ['#a8545a', '#a8545a', '#a8545a', '#a8545a'],
+  bossglow: ['#ff5a2a', '#ff5a2a', '#ff5a2a', '#ff5a2a'],
   white:   ['#f4efe6', '#f4efe6', '#f4efe6', '#f4efe6'],
   pupil:   ['#120d14', '#120d14', '#120d14', '#120d14'],
   lid:     ['#9c5f47', '#9c5f47', '#9c5f47', '#9c5f47'],
 };
-const FLAT = new Set(['white', 'pupil', 'lid', 'eyeglow', 'mouth', 'eyecult']);
+const FLAT = new Set(['white', 'pupil', 'lid', 'eyeglow', 'mouth', 'eyecult', 'glass', 'lips', 'bossglow']);
 const MAT_NAMES = Object.keys(MATERIALS);
 const MAT_INDEX = Object.fromEntries(MAT_NAMES.map((n, i) => [n, i]));
 const MAT32 = MAT_NAMES.map((n) => MATERIALS[n].map((h) => pack(hexRgb(h))));
@@ -226,8 +237,8 @@ function updateCharacter(dt, input) {
   const busy = dissolve.state !== 'none' || spell.state !== 'idle' || ch.hurt > 0;
   const dir = busy ? 0 : input.dir;
   const crouching = !busy && input.crouch && ch.onGround;
-  const runSpeed = cfg.walk * 2.1;
-  const target = dir * (input.run ? runSpeed : cfg.walk) * (crouching ? 0.4 : 1);
+  const walk = cfg.walk * heroDef().walk;
+  const target = dir * (input.run ? walk * 2.1 : walk) * (crouching ? 0.4 : 1);
 
   ch.vx = approach(ch.vx, target, (ch.onGround ? 340 : 180) * dt);
   if (dir !== 0) ch.facing = dir;
@@ -235,7 +246,7 @@ function updateCharacter(dt, input) {
   if (input.jump) jumpBuffer = 0.12;
   jumpBuffer -= dt;
   if (jumpBuffer > 0 && ch.onGround && !busy) {
-    ch.vy = -cfg.jump;
+    ch.vy = -heroDef().jump;
     ch.onGround = false;
     jumpBuffer = 0;
   }
@@ -250,7 +261,9 @@ function updateCharacter(dt, input) {
     }
     ch.y = FEET_Y; ch.vy = 0; ch.onGround = true;
   }
-  if (ch.x < 12 || ch.x > W - 12) { ch.x = clamp(ch.x, 12, W - 12); ch.vx = 0; }
+  // During the boss fight the arena's left edge is a wall.
+  const minX = BOSS.locked ? ARENA_X0 + 10 : 12;
+  if (ch.x < minX || ch.x > W - 12) { ch.x = clamp(ch.x, minX, W - 12); ch.vx = 0; }
 
   ch.crouch = approach(ch.crouch, crouching ? 1 : 0, dt * 6);
   ch.squash = approach(ch.squash, 0, dt * 4);
@@ -324,29 +337,26 @@ function spawnInward() {
   embers.push({ x, y, vx: (hx - x) / life, vy: (hy - y) / life, life, heat: 22 + spell.power * 10, g: 0 });
 }
 
+// Each character throws its own spell (heroes.js).
 function launch() {
-  const f = ch.facing;
-  const [hx, hy] = pose.hand;
-  const p = spell.power;
-  bolts.push({ x: hx + f * 2, y: hy, y0: hy, vx: f * (150 + p * 90), r: 1.8 + p * 2.6, age: 0, sx: hx, sy: hy, power: p });
-  ch.vx = -f * (18 + 30 * p); // recoil
-  shake = Math.max(shake, 0.5 + p);
+  launchHeroSpell();
 }
 
 function impact(b, onDummy, target = null) {
   b.dead = true;
   const dir = Math.sign(b.vx);
-  const R = 6 + b.power * 10;
+  const mul = b.dmgMul || 1;
+  const R = b.small ? 4 + b.power * 5 : 6 + b.power * 10;
   blasts.push({ x: b.x, y: b.y, t: 0, R });
-  if (target) hitEnemy(target, 25 + b.power * 60, dir, b.power, 2.5 + b.power * 2.5);
+  if (target) hitEnemy(target, (25 + b.power * 60) * mul, dir, b.power, 2.5 + b.power * 2.5);
   // Splash: the explosion also hurts and ignites ghouls nearby.
   for (const e of enemies) {
     if (e === target || e.state === 'dying') continue;
     if (enemyHit(e, b.x, b.y, R + 4)) {
-      hitEnemy(e, 12 + b.power * 25, Math.sign(e.x - b.x) || dir, b.power * 0.5, 1.5 + b.power * 2);
+      hitEnemy(e, (12 + b.power * 25) * mul, Math.sign(e.x - b.x) || dir, b.power * 0.5, 1.5 + b.power * 2);
     }
   }
-  const n = 12 + Math.round(b.power * 20);
+  const n = (b.small ? 5 : 12) + Math.round(b.power * 20);
   for (let i = 0; i < n; i++) {
     const a = -Math.PI * Math.random();
     const sp = (50 + Math.random() * 110) * (0.6 + b.power * 0.7);
@@ -356,7 +366,7 @@ function impact(b, onDummy, target = null) {
       life: 0.5 + Math.random() * 0.9, heat: 30 + ((Math.random() * 6) | 0), g: 1,
     });
   }
-  shake = Math.max(shake, 1.5 + b.power * 2.5);
+  shake = Math.max(shake, (b.small ? 0.6 : 1.5) + b.power * 2.5);
   if (onDummy) {
     dummy.angV += dir * (4 + b.power * 6);
     dummy.burn = Math.max(dummy.burn, 1.6 + b.power * 1.8);
@@ -368,6 +378,8 @@ function updateProjectiles(dt) {
   for (const b of bolts) {
     b.age += dt;
     b.x += b.vx * dt;
+    steerBolt(b, dt);
+    b.y0 += (b.vy || 0) * dt;
     b.y = b.y0 + Math.sin(b.age * 18) * 0.6;
     let target = null;
     for (const e of enemies) {
@@ -375,7 +387,7 @@ function updateProjectiles(dt) {
     }
     if (target) impact(b, false, target);
     else if (cfg.enemies === 'off' && Math.abs(dummy.x - b.x) < 6 && b.y > GROUND - 40 && b.y < GROUND - 6) impact(b, true);
-    else if (b.x < 2 || b.x > W - 3 || b.age > 3) impact(b, false);
+    else if (b.x < 2 || b.x > W - 3 || b.age > 3 || b.y > GROUND - 1 || b.y < 2) impact(b, false);
   }
   for (let i = bolts.length - 1; i >= 0; i--) if (bolts[i].dead) bolts.splice(i, 1);
 
@@ -530,13 +542,13 @@ function verlet(chain, anchor, len, t) {
   }
 }
 
+// Anchors depend on the character: scarf tails, locks of hair or the cape's edges,
+// and the hood tip, the hat tip or the plume.
 function updateSecondary(t, dt) {
-  const T = BODY.torso;
-  verlet(ch.scarfA, torsoPt(-2.4, T - 0.6), 2.2, t);
-  verlet(ch.scarfB, torsoPt(-2.2, T - 2.0), 2.1, t + 1.7);
-  const f = pose.f;
-  const tx = pose.headX - f * (BODY.headR + 2.4);
-  const ty = pose.headY - 0.6 - pose.run * 0.8;
+  const S = heroDef().secondary(pose, BODY.torso);
+  verlet(ch.scarfA, S.a, S.lenA, t);
+  verlet(ch.scarfB, S.b, S.lenB, t + 1.7);
+  const [tx, ty] = S.tip;
   const h = ch.hood;
   h.vx += ((tx - h.x) * 160 - h.vx * 13) * dt;
   h.vy += ((ty - h.y) * 160 - h.vy * 13) * dt;
@@ -704,7 +716,7 @@ function rasterize() {
   applyBurnAway();
 }
 
-function drawCharacter() {
+function drawAndarilho() {
   const { f, legs, arms } = pose;
   const T = BODY.torso;
 
@@ -946,6 +958,7 @@ function seedSpell() {
     if (bl.t < 0.12) fireDisk(bl.x, bl.y, r, MAX_HEAT);
     else fireRing(bl.x, bl.y, r, 1.2, Math.round(MAX_HEAT * (1 - k * 0.4)));
   }
+  seedHeroWaves();
   // A burning dummy is its own heat source for a while.
   if (cfg.enemies === 'off' && dummy.burn > 0) {
     const heat = Math.round(18 + 18 * Math.min(1, dummy.burn / 1.5));
@@ -1019,4 +1032,5 @@ function buildFx() {
   for (const bl of blasts) {
     if (bl.t < 0.09) fxDisk(bl.x, bl.y, bl.R * 0.55 * (1 - bl.t / 0.09) + 2, 24);
   }
+  heroWaveFx();
 }

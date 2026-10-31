@@ -96,7 +96,7 @@
     <canvas id="stage" aria-label="Personagem pixelado animado proceduralmente com efeito de fogo"></canvas>
     <div class="title">
       <h1>FIRE WALKER</h1>
-      <p>Nenhum quadro desenhado à mão: um esqueleto, senos e IK, desenhado em pixels e sombreado a cada quadro. Atravesse o cemitério, as ruínas, a vila e o portão. Carniçais, morcegos, cultistas e brutamontes sentem cada magia e pegam fogo. Tudo que queima é o fogo do DOOM.</p>
+      <p>Nenhum quadro desenhado à mão: um esqueleto, senos e IK, desenhado em pixels e sombreado a cada quadro. Escolha o Andarilho, a Bruxa ou o Paladino e atravesse cemitério, ruínas e vila até o Guardião, no fim do portão. Cada inimigo sente a magia e pega fogo. Tudo que queima é o fogo do DOOM.</p>
       <p id="hud" class="hud" aria-live="polite"></p>
     </div>
     <div id="banner" class="banner" aria-live="polite"></div>
@@ -115,6 +115,13 @@
   </div>
 
   <div class="controls">
+    <label>Personagem
+      <select id="hero">
+        <option value="andarilho" selected>Andarilho · bola de fogo</option>
+        <option value="bruxa">Bruxa · fogos-fátuos</option>
+        <option value="paladino">Paladino · onda de chamas</option>
+      </select>
+    </label>
     <label>Inimigos
       <select id="enemies">
         <option value="off">Desligados (boneco)</option>
@@ -145,11 +152,13 @@
     <label><input id="auto" type="checkbox" checked /> Piloto automático</label>
     <button id="cast" data-hold="Cast" title="Segure para carregar, solte para lançar">Magia (segure)</button>
     <button id="dissolve">Dissolver</button>
-    <span class="hint">←→ andar · Shift correr · ↑ pular · ↓ agachar (desvia de orbes) · F segurar: magia · E dissolver · K esqueleto</span>
+    <span class="hint">←→ andar · Shift correr · ↑ pular · ↓ agachar (desvia de orbes) · F segurar: magia · E dissolver · 1 2 3 personagem · K esqueleto</span>
   </div>
 
   <script src="walker.js"></script>
+  <script src="heroes.js"></script>
   <script src="enemies.js"></script>
+  <script src="boss.js"></script>
   <script src="world.js"></script>
   <script src="render.js"></script>
   <script src="main.js"></script>

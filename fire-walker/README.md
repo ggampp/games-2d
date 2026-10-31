@@ -1,6 +1,6 @@
 # Fire Walker
 
-Um herói pixelado animado **sem nenhum quadro desenhado à mão** atravessa um mundo de três telas (cemitério, ruínas, vila queimada e portão) enfrentando carniçais, morcegos, cultistas e brutamontes com magia de fogo. Cada inimigo sente o golpe e começa a queimar. A silhueta do herói, a magia, as explosões, os braseiros e os inimigos em chamas são todos fontes de calor do [fogo do DOOM](../doom-fire). Canvas 2D puro, sem dependências.
+Escolha entre três heróis pixelados animados **sem nenhum quadro desenhado à mão** (Andarilho, Bruxa ou Paladino) e atravesse um mundo de três telas (cemitério, ruínas, vila queimada e portão) enfrentando carniçais, morcegos, cultistas e brutamontes com magia, até o chefe no fim do portão. Cada inimigo sente o golpe e começa a queimar. A silhueta do herói, a magia, as explosões, os braseiros e os inimigos em chamas são todos fontes de calor do [fogo do DOOM](../doom-fire). Canvas 2D puro, sem dependências.
 
 ## Como rodar
 
@@ -14,8 +14,10 @@ npx serve .        # ou: python3 -m http.server
 
 | Arquivo | Responsabilidade |
 |---|---|
-| `walker.js` | Núcleo: configuração, paletas, herói (física, pose, desenho), magia, rasterização por id de parte e sombreamento, simulação do fogo |
+| `walker.js` | Núcleo: configuração, paletas, herói (física, pose, desenho do Andarilho), magia, rasterização por id de parte e sombreamento, simulação do fogo |
+| `heroes.js` | Personagens jogáveis: atributos, movimento secundário, desenho da Bruxa e do Paladino, e as magias de cada um |
 | `enemies.js` | Tipos de inimigo, ondas, vida, golpes, queima, projéteis e onda de choque |
+| `boss.js` | O Guardião do Portão: arena, ataques, fúria, meteoros |
 | `world.js` | Câmera, camadas com parallax, áreas do cenário, piso e braseiros |
 | `render.js` | Composição da janela da câmera, barras de vida e esqueleto sobreposto |
 | `main.js` | Teclado e toque, piloto automático, interface e loop principal |
@@ -123,6 +125,30 @@ As áreas são **Cemitério** (cerca de ferro, árvore seca, cripta, lápides, c
 
 Os tipos vão sendo liberados em **ondas**: a cada 6 inimigos queimados, a onda sobe (carniçais na 1, morcegos a partir da 2, cultistas da 3, brutamontes da 4), aparecem mais inimigos ao mesmo tempo e o intervalo entre eles diminui. O piloto automático desvia dos orbes agachando, pula as ondas de choque, pula para acertar morcegos e carrega mais a magia contra brutamontes.
 
+### 9. Personagens
+
+Os três usam o mesmo esqueleto, IK, poses de magia e física. Mudam a aparência (partes próprias e movimento secundário), os atributos e a magia:
+
+| Personagem | Vida | Movimento | Visual | Magia |
+|---|---|---|---|---|
+| **Andarilho** | 100 | normal | Capuz com ponta, máscara e dois rabos de cachecol, espada nas costas | **Bola de fogo** carregável |
+| **Bruxa** | 80 | mais rápida e pula mais alto | Chapéu de bruxa com a ponta em mola, cabelo comprido com física, vestido, meias, varinha e um frasco no cinto | **Fogos-fátuos**: de 1 a 3 projéteis em leque (conforme a carga) que perseguem o inimigo mais próximo; bons contra morcegos |
+| **Paladino** | 150 | mais lento | Armadura completa, elmo com viseira e pluma, capa com física, tabardo com cruz, escudo nas costas e maça no cinto | **Onda de chamas**: uma parede de fogo corre pelo chão e acerta todos os inimigos no caminho (não alcança morcegos no alto) |
+
+Troque em **Personagem** ou com as teclas `1`, `2` e `3`. A troca também muda para a paleta do personagem.
+
+### 10. O Guardião do Portão
+
+Ao chegar ao fim do portão, a câmera trava na arena, o caminho de volta fecha e os inimigos comuns param de surgir. O Guardião é um cavaleiro gigante (~60 px) de elmo com chifres, visor brilhante, capa e espada enorme, montado com o mesmo pipeline de esqueleto, sombreamento e queima.
+
+| Ataque | Como desviar |
+|---|---|
+| **Golpe de espada**: preparação acima da cabeça e um corte que deixa um arco de fogo | Pular ou manter distância |
+| **Pisão**: os dois punhos no chão e uma onda de choque de fogo para os dois lados | Pular a onda |
+| **Chuva de meteoros**: espada erguida; marcas brilham no chão e os meteoros caem nelas | Sair de cima das marcas |
+
+Com metade da vida ele entra em **fúria**: a espada pega fogo e ele anda e ataca mais rápido. Ele sente cada golpe (flash e brasas), mas só **cambaleia** com tiros carregados, e depois de um cambaleio fica 4 s sem cambalear de novo. Ao morrer, cai de joelhos e queima devagar até virar cinza, com "Vitória!". Se você voltar depois de 40 s, ele aparece de novo. A barra de vida dele, com o nome, fica embaixo da tela.
+
 ## Controles
 
 | Tecla | Ação |
@@ -133,6 +159,7 @@ Os tipos vão sendo liberados em **ondas**: a cada 6 inimigos queimados, a onda 
 | `↓` / `S` | Agachar (desvia dos orbes do cultista) |
 | `F` / `Q` (segurar) | Carregar e lançar a magia |
 | `E` | Dissolver e teleportar |
+| `1` `2` `3` | Andarilho, Bruxa, Paladino |
 | `K` | Mostrar o esqueleto |
 
 No celular aparecem botões na tela, e a câmera dá zoom e segue o personagem. O **piloto automático** luta sozinho (ou anda e treina no boneco quando os inimigos estão desligados) até você usar um controle.
