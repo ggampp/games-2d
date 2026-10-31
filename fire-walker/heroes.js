@@ -153,6 +153,7 @@ function drawCharacter() {
   if (cfg.hero === 'bruxa') drawBruxa();
   else if (cfg.hero === 'paladino') drawPaladino();
   else drawAndarilho();
+  drawSword(); // melee.js
 }
 
 // Forearm direction (elbow -> wrist), normalized.

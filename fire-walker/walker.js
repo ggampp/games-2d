@@ -235,7 +235,7 @@ let jumpBuffer = 0;
 let landingBurst = 0;
 
 function updateCharacter(dt, input) {
-  const busy = dissolve.state !== 'none' || spell.state !== 'idle' || ch.hurt > 0;
+  const busy = dissolve.state !== 'none' || spell.state !== 'idle' || melee.state !== 'idle' || ch.hurt > 0;
   const dir = busy ? 0 : input.dir;
   const crouching = !busy && input.crouch && ch.onGround;
   const walk = cfg.walk * heroDef().walk;
@@ -310,7 +310,7 @@ const orbRadius = () => 1.2 + spell.power * 2.6;
 function updateSpell(dt, held) {
   const s = spell;
   if (s.state === 'idle') {
-    if (held && dissolve.state === 'none') {
+    if (held && dissolve.state === 'none' && melee.state === 'idle') {
       s.state = 'charge'; s.t = 0; s.power = 0; s.release = false; s.launched = false;
     }
     return;
@@ -447,6 +447,8 @@ function castBlend() {
 
 function computePose(t) {
   const cast = castBlend();
+  const mb = meleeBlend(); // sword swing (melee.js)
+  const mk = mb ? mb.k : 0;
   const ck = cast ? cast.k : 0;
   const f = ch.facing;
   const speed = Math.abs(ch.vx);
@@ -466,6 +468,7 @@ function computePose(t) {
     const ph = ch.phase + i * Math.PI;
     let stand = i === 0 ? 2 : -1.7;
     if (cast) stand = lerp(stand, i === 0 ? 5 : -4.5, cast.lunge * ck); // plant the feet
+    if (mb) stand = lerp(stand, i === 0 ? 4 : -3.5, mk * 0.8);
     const off = -Math.cos(ph) * (ch.stride / 2) * a + stand * (1 - a);
     const lift = Math.max(0, Math.sin(ph)) * cfg.step * (1 + run * 0.6) * a;
     let fx = hipX + f * off;
@@ -478,6 +481,7 @@ function computePose(t) {
 
   let lean = 0.06 + a * 0.1 + run * 0.22 - air * 0.05 + crouch * 0.25;
   if (cast) lean = lerp(lean, cast.lean, ck);
+  if (mb) lean = lerp(lean, mb.lean, mk);
   const hk = clamp(ch.hurt / 0.3, 0, 1); // recoil when a ghoul hits him
   lean = lerp(lean, -0.35, hk);
   const up = [f * Math.sin(lean), -Math.cos(lean)];  // torso axis
@@ -502,6 +506,7 @@ function computePose(t) {
     ua = lerp(ua, i === 0 ? 2.3 : 1.9, air * 0.85);
     fa = lerp(fa, i === 0 ? 2.8 : 2.4, air * 0.85);
     if (cast) { ua = lerp(ua, cast.ua[i], ck); fa = lerp(fa, cast.fa[i], ck); }
+    if (mb) { ua = lerp(ua, mb.ua[i], mk); fa = lerp(fa, mb.fa[i], mk); }
     if (hk > 0) { ua = lerp(ua, i === 0 ? -0.5 : -0.8, hk); fa = lerp(fa, i === 0 ? 0.3 : -0.4, hk); }
     const ex = shX + f * Math.sin(ua) * BODY.upperArm;
     const ey = shY + Math.cos(ua) * BODY.upperArm;
@@ -514,6 +519,7 @@ function computePose(t) {
   const hand = [fa0.hx + ((fa0.hx - fa0.ex) / fd) * 2.4, fa0.hy + ((fa0.hy - fa0.ey) / fd) * 2.4];
 
   pose = { f, hipX, hipY, neckX, neckY, headX, headY, legs, arms, up, fw, run, a, breathe, hand };
+  pose.sword = swordGeom(pose);
   return pose;
 }
 
@@ -731,14 +737,16 @@ function drawAndarilho() {
     const guardC = torsoPt(-2.7, T + 2.6);
     const pommel = torsoPt(-1.5, T + 6.6);
     seg(tip, guardC, 1.2, 1.5, part('leather', true));
-    seg(guardC, pommel, 0.8, 0.8, part('leather', true));
+    if (!swordOut()) seg(guardC, pommel, 0.8, 0.8, part('leather', true)); // the grip leaves with the sword
     const dx = pommel[0] - tip[0];
     const dy = pommel[1] - tip[1];
     const d = Math.hypot(dx, dy);
     const nx = -dy / d;
     const ny = dx / d;
-    seg([guardC[0] - nx * 2.6, guardC[1] - ny * 2.6], [guardC[0] + nx * 2.6, guardC[1] + ny * 2.6], 0.75, 0.75, part('metal'));
-    disk(pommel[0], pommel[1], 1.1, part('metal'));
+    if (!swordOut()) {
+      seg([guardC[0] - nx * 2.6, guardC[1] - ny * 2.6], [guardC[0] + nx * 2.6, guardC[1] + ny * 2.6], 0.75, 0.75, part('metal'));
+      disk(pommel[0], pommel[1], 1.1, part('metal'));
+    }
   }
   chain(ch.scarfB, 1.3, 0.6, part('scarf', true));
   chain(ch.scarfA, 1.5, 0.7, part('scarf'));
@@ -963,6 +971,7 @@ function seedSpell() {
     else fireRing(bl.x, bl.y, r, 1.2, Math.round(MAX_HEAT * (1 - k * 0.4)));
   }
   seedHeroWaves();
+  seedMelee();
   // A burning dummy is its own heat source for a while.
   if (cfg.enemies === 'off' && dummy.burn > 0) {
     const heat = Math.round(18 + 18 * Math.min(1, dummy.burn / 1.5));
@@ -1037,4 +1046,5 @@ function buildFx() {
     if (bl.t < 0.09) fxDisk(bl.x, bl.y, bl.R * 0.55 * (1 - bl.t / 0.09) + 2, 24);
   }
   heroWaveFx();
+  meleeFx();
 }
