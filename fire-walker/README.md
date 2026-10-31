@@ -1,6 +1,6 @@
 # Fire Walker
 
-Um personagem pixelado animado **sem nenhum quadro desenhado à mão**, que enfrenta carniçais com magia de fogo. Quando são atingidos, eles sentem o golpe e começam a queimar. A silhueta do herói, a magia, as explosões e os inimigos em chamas são todos fontes de calor do [fogo do DOOM](../doom-fire). Canvas 2D puro, sem dependências.
+Um herói pixelado animado **sem nenhum quadro desenhado à mão** atravessa um mundo de três telas (cemitério, ruínas, vila queimada e portão) enfrentando carniçais, morcegos, cultistas e brutamontes com magia de fogo. Cada inimigo sente o golpe e começa a queimar. A silhueta do herói, a magia, as explosões, os braseiros e os inimigos em chamas são todos fontes de calor do [fogo do DOOM](../doom-fire). Canvas 2D puro, sem dependências.
 
 ## Como rodar
 
@@ -9,6 +9,18 @@ Abra `index.html` no navegador, ou sirva a pasta:
 ```bash
 npx serve .        # ou: python3 -m http.server
 ```
+
+## Arquivos
+
+| Arquivo | Responsabilidade |
+|---|---|
+| `walker.js` | Núcleo: configuração, paletas, herói (física, pose, desenho), magia, rasterização por id de parte e sombreamento, simulação do fogo |
+| `enemies.js` | Tipos de inimigo, ondas, vida, golpes, queima, projéteis e onda de choque |
+| `world.js` | Câmera, camadas com parallax, áreas do cenário, piso e braseiros |
+| `render.js` | Composição da janela da câmera, barras de vida e esqueleto sobreposto |
+| `main.js` | Teclado e toque, piloto automático, interface e loop principal |
+
+Os scripts são clássicos (sem módulos) e compartilham o escopo global; a ordem de carga no `index.html` importa.
 
 ## Como funciona
 
@@ -83,6 +95,34 @@ Quando um carniçal é atingido:
 
 O dano vem do golpe direto, dos respingos da explosão e da queima contínua. Um tiro carregado ao máximo quase sempre mata; dois tiros rápidos também. Em **Inimigos** dá para escolher Poucos, Muitos ou Desligados (aí volta o boneco de treino). O piloto automático mantém distância, carrega mais a magia quanto mais longe está o alvo e se teleporta quando fica encurralado.
 
+### 6. Cenário
+
+O mundo tem 768 px de largura (três telas) e a câmera segue o herói, olhando um pouco à frente de onde ele está virado. Três camadas andam em velocidades diferentes:
+
+| Camada | Velocidade | Conteúdo |
+|---|---|---|
+| Longe | ×0,25 | Céu com dithering, estrelas, lua, duas cordilheiras e um castelo com janelas acesas |
+| Meio | ×0,6 | Colinas com árvores secas e túmulos distantes |
+| Perto | ×1 | As áreas, o piso e os braseiros |
+
+As áreas são **Cemitério** (cerca de ferro, árvore seca, cripta, lápides, chão de terra com grama), **Ruínas** (pilares rachados, coluna caída, arco), **Vila** (casas queimadas, barris, carroça, calçamento) e **Portão** (muralha com ameias, torre, grade levadiça, estandartes). Os objetos de perto são desenhados como ids de forma e sombreados pela mesma regra de luz dos personagens. Os **braseiros** são fontes permanentes do fogo e incendeiam inimigos que passam por eles.
+
+### 7. Vida
+
+- **Herói**: barra no canto da tela com um coração. Ao levar dano, a barra cai na hora e um rastro claro vai diminuindo atrás dela. Abaixo de 30% o coração e a barra piscam. Depois de 4 s sem levar dano, a vida se regenera devagar. Se zerar, aparece "Derrotado", ele queima de cima para baixo e renasce no mesmo lugar com a vida cheia e 2 s de invulnerabilidade, piscando.
+- **Inimigos**: uma barrinha sobre a cabeça, com o mesmo rastro claro. Aparece quando levam dano e some depois de 2,5 s. Pisca laranja enquanto eles queimam.
+
+### 8. Tipos de inimigo
+
+| Inimigo | Vida | Comportamento | Como enfrentar |
+|---|---|---|---|
+| **Carniçal** | 100 | Corcunda e mancando; se aproxima e golpeia com as garras | Manter distância e lançar |
+| **Morcego** | 30 | Voa fora de alcance e mergulha no peito do herói. Ao queimar, voa em pânico e cai rodopiando | Lançar quando ele mergulha, ou pular e lançar no ar |
+| **Cultista** | 70 | Manto e olhos roxos; mantém distância e lança orbes sombrios | Agachar (`↓`) ou pular para desviar; a magia do herói destrói o orbe no ar |
+| **Brutamontes** | 320 | Grande e lento; recua pouco, não para o ataque com golpes fracos, não entra em pânico ao queimar. Esmaga o chão e solta uma onda de choque de fogo para os dois lados | Pular a onda de choque; tiros carregados |
+
+Os tipos vão sendo liberados em **ondas**: a cada 6 inimigos queimados, a onda sobe (carniçais na 1, morcegos a partir da 2, cultistas da 3, brutamontes da 4), aparecem mais inimigos ao mesmo tempo e o intervalo entre eles diminui. O piloto automático desvia dos orbes agachando, pula as ondas de choque, pula para acertar morcegos e carrega mais a magia contra brutamontes.
+
 ## Controles
 
 | Tecla | Ação |
@@ -90,7 +130,7 @@ O dano vem do golpe direto, dos respingos da explosão e da queima contínua. Um
 | `←` `→` / `A` `D` | Andar |
 | `Shift` | Correr |
 | `↑` / `W` / `Espaço` | Pular |
-| `↓` / `S` | Agachar |
+| `↓` / `S` | Agachar (desvia dos orbes do cultista) |
 | `F` / `Q` (segurar) | Carregar e lançar a magia |
 | `E` | Dissolver e teleportar |
 | `K` | Mostrar o esqueleto |
