@@ -12,6 +12,7 @@ Cada pasta é um projeto independente. Instale e rode **dentro** dela.
 | [`ironclad-rampage/`](./ironclad-rampage) | Beat 'em up 2.5D | Three.js | `npm install && npm run dev` |
 | [`isle-builder/`](./isle-builder) | Sandbox top-down | Three.js ortográfico | `npm install && npm run dev` |
 | [`favor-dos-deuses/`](./favor-dos-deuses) | Action RPG top-down | Phaser 3 | `npm install && npm run dev` |
+| [`doom-fire/`](./doom-fire) | Efeito de fogo do DOOM PSX | Canvas 2D | abrir `index.html` |
 
 Remote previsto: `git@github-pessoal:ggampp/games-2d.git`
 

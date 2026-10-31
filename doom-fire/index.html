@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DOOM Fire</title>
+  <style>
+    :root {
+      --bg: #070707;
+      --panel: #121110;
+      --border: #2a2420;
+      --text: #efe6dc;
+      --muted: #9a8f84;
+      --accent: #df5707;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      overflow: hidden;
+    }
+    #fire {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+      touch-action: none;
+    }
+    .stage { position: relative; min-height: 0; }
+    .title {
+      position: absolute; top: 16px; left: 16px; right: 16px;
+      pointer-events: none;
+      text-shadow: 0 1px 6px #000;
+    }
+    .title h1 { margin: 0; font-size: 20px; letter-spacing: .04em; }
+    .title p { margin: 4px 0 0; color: var(--muted); max-width: 52ch; }
+    body.debug .title { display: none; }
+    #palette {
+      display: flex; height: 10px; margin-top: 10px; max-width: 420px;
+      border: 1px solid var(--border);
+    }
+    #palette span { flex: 1; }
+    .controls {
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center;
+    }
+    label { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+    label b { color: var(--text); font-variant-numeric: tabular-nums; min-width: 2ch; }
+    input[type=range] { accent-color: var(--accent); width: 110px; }
+    select, button {
+      background: #1d1a17; color: var(--text);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 10px; font: inherit;
+    }
+    button { cursor: pointer; }
+    button:hover:not(:disabled) { border-color: var(--accent); }
+    button:disabled, select:disabled { opacity: .45; cursor: default; }
+    .hint { color: var(--muted); font-size: 12px; margin-left: auto; }
+    @media (max-width: 640px) { .hint { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <canvas id="fire"></canvas>
+    <div class="title">
+      <h1>DOOM FIRE</h1>
+      <p>37 cores, um grid de números e um <code>for</code>. Clique/arraste no chão para adicionar calor.</p>
+      <div id="palette" aria-label="Paleta de 37 cores"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <label>Modo
+      <select id="mode">
+        <option value="pixels">Pixels</option>
+        <option value="numbers">Números (debug)</option>
+      </select>
+    </label>
+    <label>Resolução
+      <select id="res">
+        <option value="low">80×50</option>
+        <option value="psx" selected>320×168 (PSX)</option>
+        <option value="high">640×336</option>
+      </select>
+    </label>
+    <label>Vento <input id="wind" type="range" min="0" max="3" step="1" value="1" /> <b id="windVal">1</b></label>
+    <label>Direção
+      <select id="windDir">
+        <option value="-1" selected>Esquerda</option>
+        <option value="1">Direita</option>
+      </select>
+    </label>
+    <label>Decaimento <input id="decay" type="range" min="0" max="3" step="1" value="1" /> <b id="decayVal">1</b></label>
+    <label>FPS <input id="fps" type="range" min="5" max="60" step="1" value="27" /> <b id="fpsVal">27</b></label>
+    <button id="toggle">Apagar fogo</button>
+    <button id="pause">Pausar</button>
+    <button id="step" disabled>Passo</button>
+    <span class="hint">Espaço: fogo · P: pausar · N: passo · D: números</span>
+  </div>
+
+  <script src="fire.js"></script>
+</body>
+</html>
