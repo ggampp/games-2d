@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Prism Rules</title>
+  <meta name="description" content="A quiet optics puzzle: bend, split and filter light onto planets and flowers." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23090a12'/%3E%3Cpolygon points='16,5 28,26 4,26' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app">
+    <header id="hud-top">
+      <div id="level-title">level 1: first light</div>
+      <div id="hud-actions">
+        <button id="btn-restart" class="hud-btn" title="restart level (R)">restart <span class="sym">↺</span></button>
+        <button id="btn-levels" class="hud-btn" title="all levels">view all levels <span class="sym">☰</span></button>
+        <button id="btn-music" class="hud-btn icon" title="music"><span class="sym">♫</span></button>
+      </div>
+    </header>
+
+    <main id="arena-wrap">
+      <div id="arena">
+        <canvas id="view" width="900" height="900"></canvas>
+        <div id="hint"></div>
+        <div id="cursor" class="hand"></div>
+      </div>
+    </main>
+
+    <footer id="hud-bottom">
+      <div id="tray"></div>
+      <div id="fps">60 fps</div>
+    </footer>
+
+    <div id="modal-solved" class="modal hidden">
+      <div class="card">
+        <div class="ribbon" id="solved-ribbon">par</div>
+        <h2>solved</h2>
+        <p class="stats" id="solved-stats">5 pieces used · par 5</p>
+        <div class="buttons">
+          <button id="btn-replay" class="mbtn">replay</button>
+          <button id="btn-freeplay" class="mbtn">free play</button>
+          <button id="btn-next" class="mbtn primary">next level →</button>
+        </div>
+        <p class="progress" id="solved-progress">1 of 14 levels complete</p>
+      </div>
+    </div>
+
+    <div id="modal-levels" class="modal hidden">
+      <div class="card wide">
+        <div class="card-head">
+          <h2>levels</h2>
+          <button id="btn-close-levels" class="close">✕</button>
+        </div>
+        <div id="level-grid"></div>
+        <div class="card-foot">
+          <button id="btn-sandbox" class="mbtn">free play sandbox</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>
