@@ -193,7 +193,7 @@ const DIS_GAP = 0.35;
 const DIS_IN = 0.7;
 
 function startDissolve() {
-  if (dissolve.state === 'none' && spell.state === 'idle') { dissolve.state = 'out'; dissolve.t = 0; }
+  if (dissolve.state === 'none' && spell.state === 'idle') { dissolve.state = 'out'; dissolve.t = 0; sfx('dissolve', { x: ch.x }); }
 }
 
 function resetSecondary(x) {
@@ -208,6 +208,7 @@ function updateDissolve(dt) {
   if (dissolve.state === 'out' && dissolve.t >= DIS_OUT) {
     dissolve.state = 'gap'; dissolve.t = 0;
   } else if (dissolve.state === 'gap' && dissolve.t >= (ch.dead ? 1.6 : DIS_GAP)) {
+    sfx(ch.dead ? 'respawn' : 'materialize', { x: ch.x });
     if (ch.dead) {
       // Respawn in place with full health and a moment of invulnerability.
       ch.dead = false;
@@ -247,6 +248,7 @@ function updateCharacter(dt, input) {
   jumpBuffer -= dt;
   if (jumpBuffer > 0 && ch.onGround && !busy) {
     ch.vy = -heroDef().jump;
+    sfx('jump', { x: ch.x });
     ch.onGround = false;
     jumpBuffer = 0;
   }
@@ -258,6 +260,7 @@ function updateCharacter(dt, input) {
     if (!ch.onGround) {
       ch.squash = clamp(ch.vy / 220, 0, 1);
       if (ch.vy > 80) landingBurst = ch.squash;
+      if (ch.vy > 60) sfx('land', { x: ch.x, power: ch.squash });
     }
     ch.y = FEET_Y; ch.vy = 0; ch.onGround = true;
   }
@@ -348,6 +351,7 @@ function impact(b, onDummy, target = null) {
   const mul = b.dmgMul || 1;
   const R = b.small ? 4 + b.power * 5 : 6 + b.power * 10;
   blasts.push({ x: b.x, y: b.y, t: 0, R });
+  sfx('explode', { x: b.x, power: b.power, small: b.small });
   if (target) hitEnemy(target, (25 + b.power * 60) * mul, dir, b.power, 2.5 + b.power * 2.5);
   // Splash: the explosion also hurts and ignites ghouls nearby.
   for (const e of enemies) {

@@ -102,7 +102,9 @@ function makeEnemy(type, x, facing) {
 // Damage, burning, death
 // ---------------------------------------------------------------------------
 function ignite(e, seconds) {
-  if (e.state !== 'dying') e.burn = Math.max(e.burn, seconds);
+  if (e.state === 'dying') return;
+  if (e.burn <= 0) sfx('ignite', { x: e.x });
+  e.burn = Math.max(e.burn, seconds);
 }
 
 function damageEnemy(e, amount) {
@@ -117,6 +119,7 @@ function hitEnemy(e, damage, dir, power, burnSeconds) {
   if (e.state === 'dying') return;
   const kb = e.def.kb;
   damageEnemy(e, damage);
+  sfx('hit', { x: e.x, type: e.type, power });
   e.hurt = (0.35 + power * 0.2) * Math.min(1, 0.4 + kb * 0.6);
   e.flash = 0.09;
   e.vx = dir * (70 + power * 90) * kb;
@@ -139,7 +142,8 @@ function killEnemy(e) {
   e.hp = 0;
   stats.kills++;
   if (e.def.fly) { e.vy = -20; e.grounded = false; }
-  if (e.def.boss) { showBanner('Vitória!'); BOSS.kills++; }
+  if (e.def.boss) { showBanner('Vitória!'); BOSS.kills++; sfx('bossdeath', { x: e.x }); sfx('victory'); }
+  else sfx('die', { x: e.x, type: e.type });
 }
 
 function emberBurst(x, y, n, power) {
@@ -164,6 +168,7 @@ function playerHit(dir, dmg, kb = 1) {
   ch.onGround = false;
   if (spell.state === 'charge') spell.state = 'idle';
   stats.hitsTaken++;
+  sfx('hurt', { x: ch.x });
   shake = Math.max(shake, 2);
   hitstop = Math.max(hitstop, 0.06);
   if (ch.hp <= 0) heroDies();
@@ -177,6 +182,7 @@ function heroDies() {
   dissolve.t = 0;
   emberBurst(ch.x, ch.y - 20, 16, 0.6);
   showBanner('Derrotado');
+  sfx('herodeath', { x: ch.x });
 }
 
 function showBanner(text) {
@@ -201,7 +207,7 @@ function enemyHit(e, x, y, r) {
 function updateEnemies(dt) {
   updateBossArena(dt);
   const wave = waveOf();
-  if (wave > stats.wave) { stats.wave = wave; showBanner(`Onda ${wave}`); }
+  if (wave > stats.wave) { stats.wave = wave; showBanner(`Onda ${wave}`); sfx('wave'); }
   banner.t = Math.max(0, banner.t - dt);
 
   if (cfg.enemies !== 'off') {
@@ -417,12 +423,14 @@ function updateBat(e, dt) {
 // ---------------------------------------------------------------------------
 function castShadowOrb(e) {
   const hand = e.pose ? e.pose.arms[0].hd : [e.x, e.y - 30];
+  sfx('orbcast', { x: e.x });
   eshots.push({ x: hand[0] + e.facing * 2, y: hand[1], ty: FEET_Y - 38, vx: e.facing * 85, r: 2.6, age: 0, dmg: e.def.ranged.dmg, dead: false });
 }
 
 function slam(e) {
   const x = e.x + e.facing * 12 * e.scale;
   shockwaves.push({ x, t: 0, hit: false, dmg: e.def.melee.dmg });
+  sfx('slam', { x });
   shake = Math.max(shake, 3.5);
   emberBurst(x, GROUND - 2, 14, 0.5);
   if (heroTargetable() && Math.abs(ch.x - x) < 12 && ch.y > FEET_Y - 6) playerHit(Math.sign(ch.x - e.x) || e.facing, e.def.melee.dmg, 1.2);

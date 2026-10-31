@@ -65,6 +65,14 @@
       opacity: 0; transform: scale(.92); transition: opacity .25s, transform .25s;
     }
     .banner.show { opacity: 1; transform: scale(1); }
+    .sound-on {
+      position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: 14px;
+      background: rgba(19, 16, 25, .85); color: var(--text);
+      border: 1px solid var(--accent); border-radius: 6px; padding: 6px 12px;
+      font: 600 13px var(--mono); cursor: pointer;
+    }
+    .sound-on:hover { background: rgba(224, 112, 44, .25); }
+    @media (max-width: 560px) { .sound-on { top: auto; bottom: 80px; } }
     @media (prefers-reduced-motion: reduce) { .banner { transition: none; } }
     .controls {
       background: var(--panel);
@@ -89,6 +97,8 @@
     .bone { color: var(--bone); }
     .hint { color: var(--muted); font: 12px var(--mono); margin-left: auto; }
     @media (pointer: coarse), (max-width: 720px) { .hint { display: none; } }
+    /* Narrow screens: the settings panel scrolls so the game keeps its height. */
+    @media (max-width: 560px) { .controls { max-height: 32vh; overflow-y: auto; overscroll-behavior: contain; } }
   </style>
 </head>
 <body>
@@ -100,6 +110,7 @@
       <p id="hud" class="hud" aria-live="polite"></p>
     </div>
     <div id="banner" class="banner" aria-live="polite"></div>
+    <button id="soundOn" class="sound-on">Ativar som</button>
     <div class="touch" aria-hidden="true">
       <div>
         <button data-hold="ArrowLeft">◀</button>
@@ -147,6 +158,9 @@
     <label>Chamas <input id="flames" type="range" min="1" max="4" step="1" value="2" /> <b id="flamesVal">2</b></label>
     <label>Passo <input id="step" type="range" min="0" max="8" step="1" value="4" /> <b id="stepVal">4</b></label>
     <label>Velocidade <input id="speed" type="range" min="16" max="60" step="1" value="38" /> <b id="speedVal">38</b></label>
+    <label><input id="sound" type="checkbox" checked /> Som</label>
+    <label>Música <input id="musicVol" type="range" min="0" max="10" step="1" value="6" /></label>
+    <label>Efeitos <input id="sfxVol" type="range" min="0" max="10" step="1" value="8" /></label>
     <label><input id="shading" type="checkbox" checked /> Sombreado</label>
     <label><input id="skeleton" type="checkbox" /> <span class="bone">Esqueleto</span></label>
     <label><input id="auto" type="checkbox" checked /> Piloto automático</label>
@@ -155,6 +169,7 @@
     <span class="hint">←→ andar · Shift correr · ↑ pular · ↓ agachar (desvia de orbes) · F segurar: magia · E dissolver · 1 2 3 personagem · K esqueleto</span>
   </div>
 
+  <script src="audio.js"></script>
   <script src="walker.js"></script>
   <script src="heroes.js"></script>
   <script src="enemies.js"></script>

@@ -178,6 +178,10 @@ const ui = {
   enemies: document.getElementById('enemies'),
   hero: document.getElementById('hero'),
   hud: document.getElementById('hud'),
+  sound: document.getElementById('sound'),
+  musicVol: document.getElementById('musicVol'),
+  sfxVol: document.getElementById('sfxVol'),
+  soundOn: document.getElementById('soundOn'),
   banner: document.getElementById('banner'),
   flamesVal: document.getElementById('flamesVal'),
   stepVal: document.getElementById('stepVal'),
@@ -206,6 +210,21 @@ function applyHero() {
   ui.palette.value = cfg.palette;
 }
 ui.hero.addEventListener('change', applyHero);
+
+// Sound: browsers need a click or key press before any audio can play.
+ui.sound.addEventListener('change', () => {
+  audio.enabled = ui.sound.checked;
+  if (audio.enabled) audioStart();
+  applyVolumes();
+});
+ui.musicVol.addEventListener('input', () => { audio.musicVol = +ui.musicVol.value / 10; applyVolumes(); });
+ui.sfxVol.addEventListener('input', () => { audio.sfxVol = +ui.sfxVol.value / 10; applyVolumes(); });
+ui.soundOn.addEventListener('click', () => {
+  audio.enabled = true;
+  ui.sound.checked = true;
+  audioStart();
+  applyVolumes();
+});
 ui.enemies.addEventListener('change', () => {
   cfg.enemies = ui.enemies.value;
   if (cfg.enemies === 'off') { enemies.length = 0; eshots.length = 0; shockwaves.length = 0; meteors.length = 0; BOSS.locked = false; BOSS.active = null; }
@@ -220,6 +239,7 @@ function updateHud() {
     ? `${zone} · Boneco atingido: ${dummy.hits}`
     : `${heroDef().name} · ${BOSS.locked ? 'Arena do Guardião' : zone} · Onda ${stats.wave} · Queimados: ${stats.kills} · Quedas: ${stats.deaths}${BOSS.kills ? ` · Guardião: ${BOSS.kills}` : ''}`;
   if (t !== hudText) { hudText = t; ui.hud.textContent = t; }
+  ui.soundOn.hidden = audio.started && audio.enabled;
   const b = banner.t > 0 ? banner.text : '';
   if (b !== bannerShown) {
     bannerShown = b;
@@ -267,6 +287,7 @@ function frame(now) {
   while (acc >= DT) { tick(); acc -= DT; }
   draw();
   updateHud();
+  audioUpdate(Math.min(0.1, DT * 2));
 }
 
 new ResizeObserver(() => { fitCanvas(); if (pose) draw(); }).observe(canvas);
