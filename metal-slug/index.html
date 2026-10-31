@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>Hipotético</title>
+  </head>
+  <body>
+    <div id="stage">
+      <canvas id="view" aria-label="Piloto de terno no dinossauro, agora em 3D"></canvas>
+      <div id="hud" hidden>
+        <div class="top">
+          <div>
+            <div id="score">000000</div>
+            <div id="combo" hidden></div>
+          </div>
+          <div id="mark">HIPOTÉTICO</div>
+          <div class="right">
+            <div id="lives">VIDAS 3</div>
+            <div id="weapon">AMIGOS 0/8</div>
+          </div>
+        </div>
+        <button id="mute" type="button">SOM</button>
+        <div id="hp"><span>HP</span><div class="track"><div id="hp-fill"></div></div></div>
+        <div id="boss" hidden>
+          <span>CHEFE</span>
+          <div class="track"><div id="boss-fill"></div></div>
+        </div>
+        <div id="banner" hidden></div>
+      </div>
+      <div id="title">
+        <img src="/jogador.jpg" alt="Homem de terno montado em um dinossauro no deserto" draggable="false" />
+        <div class="scrim">
+          <p class="press" id="press">MONTANDO O DESERTO</p>
+          <p class="sub" id="sub">o piloto, as camisas e o som</p>
+          <p class="help">A/D mover · Espaço pular · X ou clique atirar · ↑ mirar · V rugir · Esc pausa</p>
+          <p class="help">Acerte a camisa vermelha: ele some, veste verde e amarelo e vira amigo.</p>
+        </div>
+      </div>
+      <div id="pause" hidden>
+        <div class="card">
+          <h2>PAUSA</h2>
+          <p>Esc continua</p>
+          <button type="button" id="resume">CONTINUAR</button>
+          <button type="button" id="retry">RECOMEÇAR</button>
+        </div>
+      </div>
+      <div id="end" hidden>
+        <div class="card">
+          <h2 id="end-title">FIM DE JOGO</h2>
+          <p id="end-rank"></p>
+          <ul id="end-stats"></ul>
+          <button type="button" id="again">JOGAR DE NOVO</button>
+        </div>
+      </div>
+      <div id="touch">
+        <div class="pad left">
+          <button type="button" data-k="left">◀</button>
+          <button type="button" data-k="right">▶</button>
+          <button type="button" data-k="jump">PULA</button>
+          <button type="button" data-k="up">MIRA</button>
+        </div>
+        <div class="pad right">
+          <button type="button" data-k="shoot">ATIRA</button>
+          <button type="button" data-k="bite">RUGIR</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./src/webgl/main.ts"></script>
+  </body>
+</html>
