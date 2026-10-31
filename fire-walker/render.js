@@ -51,7 +51,7 @@ function groundFx(bg, x, y, shadows) {
   return bg;
 }
 
-function compose(visRight = VIEW_W) {
+function compose(visLeft = 0, visRight = VIEW_W) {
   const pal = PALETTES[cfg.palette];
   const fxPal = PAL32[cfg.palette];
   // Ground shadows: the hero's shrinks as he rises.
@@ -107,7 +107,7 @@ function compose(visRight = VIEW_W) {
       frame32[fi] = ((0xff << 24) | (b << 16) | (g << 8) | r) >>> 0;
     }
   }
-  drawBars(visRight);
+  drawBars(visLeft, visRight);
   offCtx.putImageData(image, 0, 0);
 }
 
@@ -116,7 +116,7 @@ function compose(visRight = VIEW_W) {
 // ---------------------------------------------------------------------------
 const BAR = Object.fromEntries(Object.entries({
   frame: '#0b080d', back: '#2a1218', ghost: '#f2d27a', hero: '#d8432b', heroHi: '#f07a52',
-  low: '#ff6a3d', foe: '#b8322a', foeHi: '#e0553f', burn: '#f39c12', heart: '#e2453a', heartHi: '#ff9a8a',
+  low: '#ff6a3d', boss: '#8f1f3c', bossHi: '#d8456a', foe: '#b8322a', foeHi: '#e0553f', burn: '#f39c12', heart: '#e2453a', heartHi: '#ff9a8a',
 }).map(([k, v]) => [k, pack(hexRgb(v))]));
 
 function px(x, y, c) {
@@ -141,9 +141,9 @@ function bar(x, y, w, h, frac, ghost, fill, hi) {
 const HEART = ['.##.##.', '#######', '#######', '.#####.', '..###..', '...#...'];
 
 // visRight: the rightmost frame column actually on screen (narrow screens crop the view).
-function drawBars(visRight) {
+function drawBars(visLeft, visRight) {
   for (const e of enemies) {
-    if (e.state === 'dying' || e.barT <= 0 || !e.pose) continue;
+    if (e.def.boss || e.state === 'dying' || e.barT <= 0 || !e.pose) continue;
     if (e.barT < 0.5 && Math.floor(simTime * 16) % 2) continue; // blink out
     const w = clamp(Math.round(10 + e.maxHp / 30), 10, 22);
     const x = Math.round(e.x - cam.ix - w / 2);
@@ -160,6 +160,43 @@ function drawBars(visRight) {
     for (let i = 0; i < row.length; i++) if (row[i] === '#') px(hx - 10 + i, hy - 1 + j, danger || (j === 1 && i < 3) ? BAR.heartHi : BAR.heart);
   });
   bar(hx, hy, 52, 4, frac, ch.hpGhost / ch.maxHp, danger ? BAR.low : BAR.hero, BAR.heroHi);
+  drawBossBar(visLeft, visRight);
+}
+
+// A tiny 3×5 pixel font for the boss's name.
+const FONT = {
+  A: ['.#.', '#.#', '###', '#.#', '#.#'], D: ['##.', '#.#', '#.#', '#.#', '##.'],
+  G: ['.##', '#..', '#.#', '#.#', '.##'], I: ['###', '.#.', '.#.', '.#.', '###'],
+  O: ['.#.', '#.#', '#.#', '#.#', '.#.'], P: ['##.', '#.#', '##.', '#..', '#..'],
+  R: ['##.', '#.#', '##.', '#.#', '#.#'], T: ['###', '.#.', '.#.', '.#.', '.#.'],
+  U: ['#.#', '#.#', '#.#', '#.#', '###'],
+};
+const TEXT = pack(hexRgb('#efe6dc'));
+
+function pixelText(text, x, y) {
+  for (const chr of text) {
+    const g = FONT[chr];
+    if (g) {
+      g.forEach((row, j) => {
+        for (let i = 0; i < 3; i++) if (row[i] === '#') { px(x + i + 1, y + j + 1, BAR.frame); px(x + i, y + j, TEXT); }
+      });
+    }
+    x += 4;
+  }
+}
+
+// The boss gets a wide bar and his name along the bottom of the screen.
+function drawBossBar(visLeft, visRight) {
+  const e = BOSS.active;
+  if (!e || e.state === 'dying') return;
+  const w = Math.min(VIEW_W - 40, visRight - visLeft - 24);
+  const x = Math.round((visLeft + visRight - w) / 2);
+  const y = H - 7;
+  const rage = bossRage(e);
+  const fill = rage && Math.floor(simTime * 8) % 2 ? BAR.burn : BAR.boss;
+  bar(x, y, w, 3, e.hp / e.maxHp, e.hpGhost / e.maxHp, fill, BAR.bossHi);
+  const name = BOSS.name;
+  pixelText(name, Math.round((visLeft + visRight) / 2 - (name.length * 4 - 1) / 2), y - 8);
 }
 
 // ---------------------------------------------------------------------------
@@ -187,7 +224,7 @@ function draw() {
     screenCam = screenCam === null ? target : lerp(screenCam, target, 0.08);
     ox = Math.round(clamp(screenCam, cw - dw, 0));
   }
-  compose(Math.min(VIEW_W, Math.floor((cw - ox) / s)));
+  compose(Math.max(0, Math.ceil(-ox / s)), Math.min(VIEW_W, Math.floor((cw - ox) / s)));
   const sh = shake * s * 0.7;
   view = { s, ox: ox + Math.round((Math.random() - 0.5) * sh), oy: Math.round((chh - dh) / 2 + (Math.random() - 0.5) * sh) };
   ctx.fillStyle = '#0a0910';

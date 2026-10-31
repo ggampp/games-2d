@@ -7,6 +7,7 @@
 // ---------------------------------------------------------------------------
 const keys = new Set();
 let jumpPressed = false;
+const HERO_KEYS = { Digit1: 'andarilho', Digit2: 'bruxa', Digit3: 'paladino' };
 const MOVE_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD', 'KeyW', 'KeyS', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyE', 'KeyF', 'KeyQ']);
 
 function takeControl() {
@@ -20,6 +21,7 @@ window.addEventListener('keydown', (e) => {
   if (!e.repeat && (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space')) jumpPressed = true;
   if (!e.repeat && e.code === 'KeyE') startDissolve();
   if (!e.repeat && e.code === 'KeyK') { cfg.skeleton = !cfg.skeleton; ui.skeleton.checked = cfg.skeleton; }
+  if (!e.repeat && HERO_KEYS[e.code]) { ui.hero.value = HERO_KEYS[e.code]; applyHero(); }
 });
 window.addEventListener('keyup', (e) => keys.delete(e.code));
 window.addEventListener('blur', () => keys.clear());
@@ -76,6 +78,17 @@ function autopilotInput(dt) {
     const gap = Math.abs(ch.x - w.x) - w.t * SHOCK_SPEED;
     if (gap > 0 && gap < 16 && ch.onGround) return { ...idle, jump: true };
   }
+  // Step away from the glowing meteor markers.
+  for (const m of meteors) {
+    if (m.t > -0.3 && Math.abs(ch.x - m.x) < 13) {
+      const away = ch.x < m.x ? -1 : 1;
+      const blocked = (away < 0 && ch.x < ARENA_X0 + 16) || (away > 0 && ch.x > W - 16);
+      return { ...idle, crouch: false, dir: blocked ? -away : away, run: true };
+    }
+  }
+  // Jump over the boss's sword swing when it is close.
+  const bossE = BOSS.active;
+  if (bossE && bossE.state === 'sweepWind' && bossE.t > 0.35 && Math.abs(bossE.x - ch.x) < 50 && ch.onGround) return { ...idle, jump: true };
 
   // Fight the nearest enemy that is on or near the screen.
   let foe = null;
@@ -105,12 +118,12 @@ function autopilotInput(dt) {
       }
       if (ai.spellCd < 0) {
         ch.facing = Math.sign(d) || ch.facing;
-        const heavy = e.type === 'brute' ? 0.4 : 0;
+        const heavy = e.type === 'boss' ? 0.8 : e.type === 'brute' ? 0.4 : 0;
         ai.casting = clamp(dist / 150 + heavy, 0.15, 0.95) + Math.random() * 0.15; // farther / tougher = more charge
         ai.spellCd = 0.4 + Math.random() * 0.5;
         return { ...idle, crouch: false, cast: true };
       }
-      const keep = (e.type === 'brute' ? 60 : 45) + (low ? 20 : 0);
+      const keep = (e.type === 'boss' ? 75 : e.type === 'brute' ? 60 : 45) + (low ? 20 : 0);
       if (dist < keep && !cornered) return { dir: -Math.sign(d), run: false, crouch: false, jump: false, cast: false };
       if (e.type === 'cultist' && dist > 110) return { dir: Math.sign(d), run: false, crouch: false, jump: false, cast: false };
     }
@@ -163,6 +176,7 @@ const ui = {
   auto: document.getElementById('auto'),
   dissolve: document.getElementById('dissolve'),
   enemies: document.getElementById('enemies'),
+  hero: document.getElementById('hero'),
   hud: document.getElementById('hud'),
   banner: document.getElementById('banner'),
   flamesVal: document.getElementById('flamesVal'),
@@ -185,9 +199,16 @@ ui.shading.addEventListener('change', () => { cfg.shading = ui.shading.checked; 
 ui.skeleton.addEventListener('change', () => { cfg.skeleton = ui.skeleton.checked; });
 ui.auto.addEventListener('change', () => { cfg.auto = ui.auto.checked; ai.target = null; ai.wait = 0.3; });
 ui.dissolve.addEventListener('click', startDissolve);
+// Switching character also switches to that character's palette.
+function applyHero() {
+  selectHero(ui.hero.value);
+  cfg.palette = heroDef().palette;
+  ui.palette.value = cfg.palette;
+}
+ui.hero.addEventListener('change', applyHero);
 ui.enemies.addEventListener('change', () => {
   cfg.enemies = ui.enemies.value;
-  if (cfg.enemies === 'off') { enemies.length = 0; eshots.length = 0; shockwaves.length = 0; }
+  if (cfg.enemies === 'off') { enemies.length = 0; eshots.length = 0; shockwaves.length = 0; meteors.length = 0; BOSS.locked = false; BOSS.active = null; }
   spawnTimer = 0.8;
 });
 
@@ -197,7 +218,7 @@ function updateHud() {
   const zone = zoneAt(ch.x).name;
   const t = cfg.enemies === 'off'
     ? `${zone} · Boneco atingido: ${dummy.hits}`
-    : `${zone} · Onda ${stats.wave} · Queimados: ${stats.kills} · Quedas: ${stats.deaths}`;
+    : `${heroDef().name} · ${BOSS.locked ? 'Arena do Guardião' : zone} · Onda ${stats.wave} · Queimados: ${stats.kills} · Quedas: ${stats.deaths}${BOSS.kills ? ` · Guardião: ${BOSS.kills}` : ''}`;
   if (t !== hudText) { hudText = t; ui.hud.textContent = t; }
   const b = banner.t > 0 ? banner.text : '';
   if (b !== bannerShown) {
@@ -224,6 +245,7 @@ function tick() {
   updateSecondary(simTime, DT);
   updateCamera(DT);
   updateProjectiles(DT);
+  updateHeroWaves(DT);
   updateEnemies(DT);
   rasterize();
   buildFx();

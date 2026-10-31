@@ -72,7 +72,6 @@ function pickType(wave) {
 }
 
 function spawnEnemy(type) {
-  const def = ENEMY_TYPES[type];
   // Enter just outside the camera, from a side that is still inside the world.
   let side = Math.random() < 0.5 ? -1 : 1;
   const left = cam.x - 14;
@@ -80,17 +79,23 @@ function spawnEnemy(type) {
   if (left < -10) side = 1;
   if (right > W + 10) side = -1;
   const x = side < 0 ? Math.max(-10, left) : Math.min(W + 10, right);
+  enemies.push(makeEnemy(type, x, -side));
+}
+
+function makeEnemy(type, x, facing) {
+  const def = ENEMY_TYPES[type];
+  const side = -facing;
   const scale = randIn(def.scale);
-  enemies.push({
+  return {
     type, def, x, y: def.fly ? FEET_Y - 60 - Math.random() * 15 : FEET_Y,
-    vx: 0, vy: 0, onGround: !def.fly, facing: -side, scale, speed: randIn(def.speed),
+    vx: 0, vy: 0, onGround: !def.fly, facing, scale, speed: randIn(def.speed),
     phase: Math.random() * 6, wobble: Math.random() * 10, flapPh: Math.random() * 6,
     hp: def.hp, maxHp: def.hp, hpGhost: def.hp, barT: 0, lastDmg: -9,
     state: def.fly ? 'hover' : 'walk', t: 0, t2: 0, atkCd: 1 + Math.random(), entered: false,
     hurt: 0, flash: 0, burn: 0, char: 0, kneel: 0, cut: null, grounded: false, spin: 0,
     panicDir: -side, panicT: 0, jx: 0, jy: 0, diveX: 0, diveY: 0,
     lean: def.body ? def.body.hunch : 0, ua: [1.1, 1.1], fa: [1.5, 1.5], pose: null, rid: 0, gone: false,
-  });
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -119,6 +124,8 @@ function hitEnemy(e, damage, dir, power, burnSeconds) {
   else if (power > 0.45 && e.onGround && kb >= 1) { e.vy = -55 - power * 45; e.onGround = false; }
   if ((e.state === 'windup' || e.state === 'strike') && (kb >= 1 || power > 0.7)) { e.state = e.def.fly ? 'climb' : 'walk'; e.t = 0; e.atkCd = 0.7; }
   if (e.state === 'dive') { e.state = 'climb'; e.t = 0; }
+  // The boss only staggers on a charged hit, and then has a few seconds of poise.
+  if (e.def.boss && power > 0.85 && e.state !== 'intro' && !(e.poise > 0)) { e.state = 'stagger'; e.t = 0; e.poise = 4; }
   ignite(e, burnSeconds);
   hitstop = Math.max(hitstop, 0.05 + power * 0.05);
   if (e.hp <= 0) killEnemy(e);
@@ -132,6 +139,7 @@ function killEnemy(e) {
   e.hp = 0;
   stats.kills++;
   if (e.def.fly) { e.vy = -20; e.grounded = false; }
+  if (e.def.boss) { showBanner('Vitória!'); BOSS.kills++; }
 }
 
 function emberBurst(x, y, n, power) {
@@ -191,6 +199,7 @@ function enemyHit(e, x, y, r) {
 // Update
 // ---------------------------------------------------------------------------
 function updateEnemies(dt) {
+  updateBossArena(dt);
   const wave = waveOf();
   if (wave > stats.wave) { stats.wave = wave; showBanner(`Onda ${wave}`); }
   banner.t = Math.max(0, banner.t - dt);
@@ -200,7 +209,7 @@ function updateEnemies(dt) {
     spawnTimer -= dt;
     const alive = enemies.filter((e) => e.state !== 'dying').length;
     const max = Math.min(mode.cap, Math.floor(mode.base + (wave - 1) * mode.per));
-    if (spawnTimer <= 0 && alive < max && !ch.dead) {
+    if (spawnTimer <= 0 && alive < max && !ch.dead && !BOSS.locked) {
       spawnEnemy(pickType(wave));
       spawnTimer = (mode.every * (0.7 + Math.random() * 0.6)) / (1 + (wave - 1) * 0.08);
     }
@@ -215,6 +224,7 @@ function updateEnemies(dt) {
     // The light trailing bar drains toward the real health after a short pause.
     if (e.hpGhost > e.hp && simTime - e.lastDmg > 0.4) e.hpGhost = Math.max(e.hp, e.hpGhost - e.maxHp * 0.6 * dt);
     if (e.def.fly) updateBat(e, dt);
+    else if (e.def.boss) updateBoss(e, dt);
     else updateWalker(e, dt);
   }
 
@@ -463,6 +473,7 @@ function updateShots(dt) {
 // positive = toward where the enemy faces.
 function armTargets(e, a) {
   const t = e.type;
+  if (t === 'boss') return bossArmTargets(e, a);
   if (t === 'brute') {
     if (e.state === 'windup') return { ua: [2.9, 2.8], fa: [3.2, 3.1], lean: 0.05 };
     if (e.state === 'strike') return { ua: [1.2, 1.1], fa: [1.0, 0.9], lean: 0.65 };
@@ -497,7 +508,7 @@ function computeWalkerPose(e, dt) {
   const legs = [];
   for (let i = 0; i < 2; i++) {
     const ph = e.phase + i * Math.PI;
-    const stand = (i === 0 ? 2 : -1.8) * s * (e.type === 'brute' ? 1.6 : 1);
+    const stand = (i === 0 ? 2 : -1.8) * s * (e.type === 'boss' ? 2.6 : e.type === 'brute' ? 1.6 : 1);
     let fx = hipX + f * (-Math.cos(ph) * (stride / 2) * a + stand * (1 - a));
     const fy0 = e.y - Math.max(0, Math.sin(ph)) * 3 * s * a;
     if (e.kneel > 0) fx = lerp(fx, hipX + f * (i === 0 ? 5 : -6) * s, e.kneel);
@@ -523,7 +534,7 @@ function computeWalkerPose(e, dt) {
     faT = faT.map((v, i) => lerp(v, i ? -1.4 : -1.0, hurtK));
   }
   if (e.state === 'dying') { leanT = 0.9; uaT = [0.3, 0.2]; faT = [0.2, 0.1]; }
-  const sm = Math.min(1, dt * (hurtK > 0 ? 30 : 12));
+  const sm = Math.min(1, dt * (hurtK > 0 || tg.fast ? 30 : 12));
   e.lean = lerp(e.lean, leanT, sm);
   e.ua = e.ua.map((v, i) => lerp(v, uaT[i], sm));
   e.fa = e.fa.map((v, i) => lerp(v, faT[i], sm));
@@ -544,7 +555,7 @@ function computeWalkerPose(e, dt) {
     const hd = [el[0] + f * Math.sin(e.fa[i]) * B.foreArm * s, el[1] + Math.cos(e.fa[i]) * B.foreArm * s];
     return { sh: shoulder, el, hd };
   });
-  let top = head[1] - B.headR * s - (e.type === 'brute' ? 3 : e.type === 'cultist' ? 2 : 0);
+  let top = head[1] - B.headR * s - (e.type === 'boss' ? 7 : e.type === 'brute' ? 3 : e.type === 'cultist' ? 2 : 0);
   for (const arm of arms) top = Math.min(top, arm.hd[1] - 1);
   e.pose = { f, s, T, B, hipX, hipY, neck, head, legs, arms, up, fw, top };
 }
@@ -578,7 +589,8 @@ function computeBatPose(e) {
 // ---------------------------------------------------------------------------
 function drawEnemy(e) {
   if (!e.pose) return;
-  if (e.type === 'bat') drawBat(e);
+  if (e.type === 'boss') drawBoss(e);
+  else if (e.type === 'bat') drawBat(e);
   else if (e.type === 'brute') drawBrute(e);
   else if (e.type === 'cultist') drawCultist(e);
   else drawGhoul(e);
@@ -776,10 +788,11 @@ function drawBat(e) {
 // ---------------------------------------------------------------------------
 function enemyRegion(e) {
   const b = enemyBounds(e);
+  const pad = e.def.boss ? 40 : 12; // the boss's sword reaches far
   return {
-    x0: Math.max(0, Math.floor(b.x0 - 12)),
-    x1: Math.min(W - 1, Math.ceil(b.x1 + 12)),
-    y0: Math.max(0, Math.floor(b.y0 - 8)),
+    x0: Math.max(0, Math.floor(b.x0 - pad)),
+    x1: Math.min(W - 1, Math.ceil(b.x1 + pad)),
+    y0: Math.max(0, Math.floor(b.y0 - (e.def.boss ? 30 : 8))),
     y1: Math.min(H - 1, Math.ceil(b.y1 + 4)),
   };
 }
@@ -814,6 +827,7 @@ function seedEnemies() {
       }
     }
   }
+  seedBoss();
   for (const s of shockwaves) {
     const r = s.t * SHOCK_SPEED;
     const heat = Math.round(34 * (1 - s.t / SHOCK_LIFE));
@@ -842,6 +856,7 @@ function buildEnemyFx() {
     for (let k = 3; k >= 1; k--) disk2(s.x - dir * k * 2.4, s.y, s.r * (1 - k * 0.22), 12);
     disk2(s.x, s.y, s.r, 20);
   }
+  bossFx();
   for (const e of enemies) {
     if (e.type === 'cultist' && e.state === 'windup' && e.pose) {
       const k = clamp(e.t / e.def.ranged.windup, 0, 1);

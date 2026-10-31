@@ -14,7 +14,8 @@
 const cam = { x: 0, ix: 0 };
 
 function updateCamera(dt, snap = false) {
-  const target = clamp(ch.x - VIEW_W / 2 + ch.facing * 24, 0, W - VIEW_W);
+  // The boss fight locks the camera on the arena.
+  const target = BOSS.locked ? W - VIEW_W : clamp(ch.x - VIEW_W / 2 + ch.facing * 24, 0, W - VIEW_W);
   cam.x = snap ? target : lerp(cam.x, target, Math.min(1, dt * 3.5));
   cam.ix = Math.round(cam.x);
 }
