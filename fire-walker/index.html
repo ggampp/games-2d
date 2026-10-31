@@ -37,6 +37,7 @@
     }
     .title h1 { margin: 0; font: 700 18px/1.2 var(--mono); letter-spacing: .12em; }
     .title p { margin: 4px 0 0; color: var(--muted); max-width: 60ch; }
+    .title .hud { color: var(--text); font: 600 13px var(--mono); font-variant-numeric: tabular-nums; }
     .touch {
       position: absolute;
       bottom: max(12px, env(safe-area-inset-bottom, 0px));
@@ -85,7 +86,8 @@
     <canvas id="stage" aria-label="Personagem pixelado animado proceduralmente com efeito de fogo"></canvas>
     <div class="title">
       <h1>FIRE WALKER</h1>
-      <p>Nenhum quadro desenhado à mão: um esqueleto, senos e IK, desenhado em pixels e sombreado a cada quadro. A silhueta, a magia e as explosões são fontes de calor do fogo do DOOM.</p>
+      <p>Nenhum quadro desenhado à mão: um esqueleto, senos e IK, desenhado em pixels e sombreado a cada quadro. Carniçais se aproximam: acerte com magia e eles sentem o golpe e pegam fogo. Tudo que queima é o fogo do DOOM.</p>
+      <p id="hud" class="hud" aria-live="polite"></p>
     </div>
     <div class="touch" aria-hidden="true">
       <div>
@@ -101,6 +103,13 @@
   </div>
 
   <div class="controls">
+    <label>Inimigos
+      <select id="enemies">
+        <option value="off">Desligados (boneco)</option>
+        <option value="few" selected>Poucos</option>
+        <option value="many">Muitos</option>
+      </select>
+    </label>
     <label>Efeito
       <select id="effect">
         <option value="aura">Aura</option>

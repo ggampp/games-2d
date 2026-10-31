@@ -9,7 +9,10 @@
 //    aura (every pixel burns), trail (burns only while moving) and dissolve/teleport.
 //    The fire also rim-lights the character's edges.
 // 4. A chargeable spell: the orb, the bolt, its explosion and the embers are all heat
-//    sources for the same fire, aimed at a straw training dummy.
+//    sources for the same fire.
+// 5. Ghouls walk in to attack. A hit makes them feel it (hit-stop, flash, recoil,
+//    knockback) and catch fire: their own pixels become heat sources, they panic,
+//    char, spread the fire and finally burn away into ash.
 
 'use strict';
 
@@ -36,6 +39,7 @@ const cfg = {
   shading: true,
   skeleton: false,
   auto: true,
+  enemies: 'few',   // off (training dummy) | few | many
 };
 
 // ---------------------------------------------------------------------------
@@ -95,11 +99,16 @@ const MATERIALS = {
   straw:   ['#4a3a1c', '#7a6230', '#a88a46', '#d6b86c'],
   wood:    ['#21150d', '#3d2817', '#5e3f24', '#83603a'],
   rope:    ['#3a2f22', '#6b5a40', '#97815c', '#c4ad82'],
+  ghoul:   ['#1b241d', '#2f3f33', '#4b6450', '#73917a'],
+  rags:    ['#17120e', '#2a2119', '#43362a', '#62513f'],
+  bone:    ['#5a5240', '#8d846a', '#c2b998', '#ebe4c8'],
+  eyeglow: ['#ffd84a', '#ffd84a', '#ffd84a', '#ffd84a'],
+  mouth:   ['#1a0606', '#1a0606', '#1a0606', '#1a0606'],
   white:   ['#f4efe6', '#f4efe6', '#f4efe6', '#f4efe6'],
   pupil:   ['#120d14', '#120d14', '#120d14', '#120d14'],
   lid:     ['#9c5f47', '#9c5f47', '#9c5f47', '#9c5f47'],
 };
-const FLAT = new Set(['white', 'pupil', 'lid']);
+const FLAT = new Set(['white', 'pupil', 'lid', 'eyeglow', 'mouth']);
 const MAT_NAMES = Object.keys(MATERIALS);
 const MAT_INDEX = Object.fromEntries(MAT_NAMES.map((n, i) => [n, i]));
 const MAT32 = MAT_NAMES.map((n) => MATERIALS[n].map((h) => pack(hexRgb(h))));
@@ -150,6 +159,7 @@ const ch = {
   scarfB: makeChain(6, 80, FEET_Y - 29),
   hood: { x: 74, y: FEET_Y - 40, vx: 0, vy: 0 },
   blink: 2, blinking: 0,
+  hurt: 0, flash: 0,
 };
 
 const dissolve = { state: 'none', t: 0 };
@@ -189,7 +199,7 @@ let jumpBuffer = 0;
 let landingBurst = 0;
 
 function updateCharacter(dt, input) {
-  const busy = dissolve.state !== 'none' || spell.state !== 'idle';
+  const busy = dissolve.state !== 'none' || spell.state !== 'idle' || ch.hurt > 0;
   const dir = busy ? 0 : input.dir;
   const crouching = !busy && input.crouch && ch.onGround;
   const runSpeed = cfg.walk * 2.1;
@@ -231,6 +241,8 @@ function updateCharacter(dt, input) {
   ch.blink -= dt;
   if (ch.blink < 0) { ch.blinking = 0.13; ch.blink = 2.2 + Math.random() * 3.5; }
   ch.blinking = Math.max(0, ch.blinking - dt);
+  ch.hurt = Math.max(0, ch.hurt - dt);
+  ch.flash = Math.max(0, ch.flash - dt);
 }
 
 // ---------------------------------------------------------------------------
@@ -292,10 +304,19 @@ function launch() {
   shake = Math.max(shake, 0.5 + p);
 }
 
-function impact(b, onDummy) {
+function impact(b, onDummy, target = null) {
   b.dead = true;
   const dir = Math.sign(b.vx);
-  blasts.push({ x: b.x, y: b.y, t: 0, R: 6 + b.power * 10 });
+  const R = 6 + b.power * 10;
+  blasts.push({ x: b.x, y: b.y, t: 0, R });
+  if (target) hitEnemy(target, 25 + b.power * 60, dir, b.power, 2.5 + b.power * 2.5);
+  // Splash: the explosion also hurts and ignites ghouls nearby.
+  for (const e of enemies) {
+    if (e === target || e.state === 'dying') continue;
+    if (Math.abs(e.x - b.x) < R + 6 && b.y > e.y - 44 * e.scale - R && b.y < e.y + R) {
+      hitEnemy(e, 12 + b.power * 25, Math.sign(e.x - b.x) || dir, b.power * 0.5, 1.5 + b.power * 2);
+    }
+  }
   const n = 12 + Math.round(b.power * 20);
   for (let i = 0; i < n; i++) {
     const a = -Math.PI * Math.random();
@@ -319,8 +340,13 @@ function updateProjectiles(dt) {
     b.age += dt;
     b.x += b.vx * dt;
     b.y = b.y0 + Math.sin(b.age * 18) * 0.6;
-    const toDummy = dummy.x - b.x;
-    if (Math.abs(toDummy) < 6 && b.y > GROUND - 40 && b.y < GROUND - 6) impact(b, true);
+    let target = null;
+    for (const e of enemies) {
+      if (e.state === 'dying') continue;
+      if (Math.abs(e.x - b.x) < 5 * e.scale + b.r * 0.5 && b.y > e.y - 40 * e.scale && b.y < e.y + 2) { target = e; break; }
+    }
+    if (target) impact(b, false, target);
+    else if (cfg.enemies === 'off' && Math.abs(dummy.x - b.x) < 6 && b.y > GROUND - 40 && b.y < GROUND - 6) impact(b, true);
     else if (b.x < 2 || b.x > W - 3 || b.age > 3) impact(b, false);
   }
   for (let i = bolts.length - 1; i >= 0; i--) if (bolts[i].dead) bolts.splice(i, 1);
@@ -408,6 +434,8 @@ function computePose(t) {
 
   let lean = 0.06 + a * 0.1 + run * 0.22 - air * 0.05 + crouch * 0.25;
   if (cast) lean = lerp(lean, cast.lean, ck);
+  const hk = clamp(ch.hurt / 0.3, 0, 1); // recoil when a ghoul hits him
+  lean = lerp(lean, -0.35, hk);
   const up = [f * Math.sin(lean), -Math.cos(lean)];  // torso axis
   const fw = [f * Math.cos(lean), Math.sin(lean)];   // torso "forward"
   const T = BODY.torso;
@@ -430,6 +458,7 @@ function computePose(t) {
     ua = lerp(ua, i === 0 ? 2.3 : 1.9, air * 0.85);
     fa = lerp(fa, i === 0 ? 2.8 : 2.4, air * 0.85);
     if (cast) { ua = lerp(ua, cast.ua[i], ck); fa = lerp(fa, cast.fa[i], ck); }
+    if (hk > 0) { ua = lerp(ua, i === 0 ? -0.5 : -0.8, hk); fa = lerp(fa, i === 0 ? 0.3 : -0.4, hk); }
     const ex = shX + f * Math.sin(ua) * BODY.upperArm;
     const ey = shY + Math.cos(ua) * BODY.upperArm;
     arms.push({ sx: shX, sy: shY, ex, ey, hx: ex + f * Math.sin(fa) * BODY.foreArm, hy: ey + Math.cos(fa) * BODY.foreArm });
@@ -498,10 +527,14 @@ function updateSecondary(t, dt) {
 const pbuf = new Uint8Array(W * H);  // part id per pixel (draw order = depth)
 const mask = new Uint8Array(W * H);  // 0 empty, 1 body, 2 outline
 const col = new Uint32Array(W * H);  // final character color
-const partMat = new Uint8Array(64);
-const partBack = new Uint8Array(64);
-const partProp = new Uint8Array(64); // 1 = training dummy, 0 = character
-let drawingProp = false;
+const partMat = new Uint8Array(256);
+const partBack = new Uint8Array(256);
+// Who owns each part / pixel: 1 = hero, 2 = training dummy, 3+ = a ghoul.
+const partOwner = new Uint8Array(256);
+const owner = new Uint8Array(W * H);
+const ownerFlash = new Uint8Array(256);   // 1 = draw this owner white (hit flash)
+const ownerChar = new Float32Array(256);  // 0..1 how charred this owner is
+let drawOwner = 1;
 let partCount = 0;
 let bbox = { minY: 0, maxY: 0 };
 
@@ -509,7 +542,7 @@ function part(material, back = false) {
   partCount++;
   partMat[partCount] = MAT_INDEX[material];
   partBack[partCount] = back ? 1 : 0;
-  partProp[partCount] = drawingProp ? 1 : 0;
+  partOwner[partCount] = drawOwner;
   return partCount;
 }
 
@@ -596,7 +629,7 @@ function drawLeg(leg, f, back) {
 
 // Straw training dummy on a post; it tilts around its base like a spring.
 function drawDummy() {
-  drawingProp = true;
+  drawOwner = 2;
   const a = dummy.ang;
   const P = (dx, dy) => [dummy.x + dx * Math.cos(a) - dy * Math.sin(a), GROUND - 0.5 + dx * Math.sin(a) + dy * Math.cos(a)];
   seg(P(0, 0), P(0, -34), 1.5, 1.2, part('wood'));                 // post
@@ -614,17 +647,31 @@ function drawDummy() {
   plot(...P(1.6, -33), eye);
   const mouth = part('rope');
   for (let k = -1; k <= 1; k++) plot(...P(k, -30.8), mouth);
-  drawingProp = false;
+  drawOwner = 1;
 }
 
 function rasterize() {
   pbuf.fill(0);
   mask.fill(0);
+  owner.fill(0);
   partCount = 0;
-  drawDummy();
+  ownerFlash.fill(0);
+  ownerChar.fill(0);
+  if (cfg.enemies === 'off') drawDummy();
+  // Ghouls are drawn behind the hero; each gets its own owner id.
+  enemies.forEach((e, k) => {
+    e.rid = 3 + k;
+    ownerFlash[e.rid] = e.flash > 0 ? 1 : 0;
+    ownerChar[e.rid] = e.char;
+    drawOwner = e.rid;
+    drawEnemy(e);
+  });
+  drawOwner = 1;
+  ownerFlash[1] = ch.flash > 0 ? 1 : 0;
   if (dissolve.state !== 'gap') drawCharacter();
   shade();
   applyDissolve();
+  applyBurnAway();
 }
 
 function drawCharacter() {
@@ -746,21 +793,27 @@ function shade() {
           else if (dn !== p || lf !== p) s = 1;
           if (partBack[p]) s = Math.max(0, s - 1);
         }
-        const prop = partProp[p];
-        mask[i] = prop ? 3 : 1;
-        col[i] = MAT32[m][s];
-        if (!prop) {
+        const o = partOwner[p];
+        mask[i] = 1;
+        owner[i] = o;
+        let c = MAT32[m][s];
+        const burnt = ownerChar[o];
+        if (burnt > 0) {
+          // Charring: darken toward soot, with embers flickering in the cracks.
+          c = mix(c, 34, 16, 10, burnt * 0.75);
+          if (Math.random() < burnt * 0.06) c = PAL32[cfg.palette][18 + ((Math.random() * 12) | 0)];
+        }
+        if (ownerFlash[o]) c = GLOW32;
+        col[i] = c;
+        if (o === 1) {
           if (y < minY) minY = y;
           if (y > maxY) maxY = y;
         }
       } else {
-        const l = pbuf[i - 1];
-        const r = pbuf[i + 1];
-        const u = pbuf[i - W];
-        const d = pbuf[i + W];
-        if (l || r || u || d) {
-          const charNear = (l && !partProp[l]) || (r && !partProp[r]) || (u && !partProp[u]) || (d && !partProp[d]);
-          mask[i] = charNear ? 2 : 4;
+        const n = pbuf[i - 1] || pbuf[i + 1] || pbuf[i - W] || pbuf[i + W];
+        if (n) {
+          mask[i] = 2;
+          owner[i] = partOwner[n];
           col[i] = OUTLINE32;
         }
       }
@@ -780,7 +833,7 @@ function applyDissolve() {
   for (let y = Math.max(0, bbox.minY); y <= Math.min(H - 1, bbox.maxY); y++) {
     for (let x = 0; x < W; x++) {
       const i = y * W + x;
-      if (mask[i] !== 1 && mask[i] !== 2) continue;
+      if (!mask[i] || owner[i] !== 1) continue;
       const edge = out ? y >= cut - 2 && y < cut : y >= cut && y < cut + 1.5;
       if (edge) fire[i] = MAX_HEAT;
       if (y < cut) mask[i] = 0;
@@ -864,9 +917,9 @@ function seedSpell() {
     else fireRing(bl.x, bl.y, r, 1.2, Math.round(MAX_HEAT * (1 - k * 0.4)));
   }
   // A burning dummy is its own heat source for a while.
-  if (dummy.burn > 0) {
+  if (cfg.enemies === 'off' && dummy.burn > 0) {
     const heat = Math.round(18 + 18 * Math.min(1, dummy.burn / 1.5));
-    for (let i = 0; i < mask.length; i++) if ((mask[i] === 3 || mask[i] === 4) && fire[i] < heat && Math.random() < 0.6) fire[i] = heat;
+    for (let i = 0; i < mask.length; i++) if (mask[i] && owner[i] === 2 && fire[i] < heat && Math.random() < 0.6) fire[i] = heat;
   }
 }
 
@@ -874,6 +927,7 @@ function seedFire() {
   const speed = Math.abs(ch.vx);
   fireBias = speed > 10 && spell.state === 'idle' ? -ch.facing : 0;
   seedSpell();
+  seedEnemies();
   if (dissolve.state !== 'none') { landingBurst = 0; return; } // the dissolve seeds its own cut line
 
   let heat = 0;
@@ -883,7 +937,7 @@ function seedFire() {
     heat = k > 0.25 ? Math.round(14 + 22 * k) : 0;
   }
   if (heat) {
-    for (let i = 0; i < mask.length; i++) if ((mask[i] === 1 || mask[i] === 2) && fire[i] < heat) fire[i] = heat;
+    for (let i = 0; i < mask.length; i++) if (mask[i] && owner[i] === 1 && fire[i] < heat) fire[i] = heat;
   }
   if (landingBurst > 0 && cfg.effect !== 'none') {
     const row = (GROUND - 1) * W;
@@ -893,6 +947,332 @@ function seedFire() {
     }
   }
   landingBurst = 0;
+}
+
+// ---------------------------------------------------------------------------
+// Ghouls: hunched, limping, long-armed. Same IK as the hero, own proportions.
+// ---------------------------------------------------------------------------
+const GHOUL = { thigh: 8, shin: 8, torso: 11, headR: 4, upperArm: 6.5, foreArm: 6.5 };
+const ENEMY_MODES = { off: { max: 0, every: 0 }, few: { max: 3, every: 4.2 }, many: { max: 5, every: 2.2 } };
+const enemies = [];
+const scorches = [];
+const stats = { kills: 0, hitsTaken: 0 };
+let spawnTimer = 1.0;
+let hitstop = 0;
+
+function spawnEnemy() {
+  const side = Math.random() < 0.5 ? -1 : 1;
+  enemies.push({
+    x: side < 0 ? -10 : W + 10, y: FEET_Y, vx: 0, vy: 0, onGround: true,
+    facing: -side, scale: 0.9 + Math.random() * 0.25, speed: 13 + Math.random() * 8,
+    phase: Math.random() * 6, wobble: Math.random() * 10,
+    hp: 100, state: 'walk', t: 0, atkCd: 0.6, entered: false,
+    hurt: 0, flash: 0, burn: 0, char: 0, kneel: 0, cut: null,
+    panicDir: -side, panicT: 0,
+    lean: 0.45, ua: [1.1, 1.1], fa: [1.5, 1.5], pose: null, rid: 0, gone: false,
+  });
+}
+
+function ignite(e, seconds) {
+  if (e.state !== 'dying') e.burn = Math.max(e.burn, seconds);
+}
+
+// The ghoul "feels" the hit: freeze-frame, white flash, recoil, knockback, fire.
+function hitEnemy(e, damage, dir, power, burnSeconds) {
+  if (e.state === 'dying') return;
+  e.hp -= damage;
+  e.hurt = 0.35 + power * 0.2;
+  e.flash = 0.09;
+  e.vx = dir * (70 + power * 90);
+  if (power > 0.45 && e.onGround) { e.vy = -55 - power * 45; e.onGround = false; }
+  if (e.state === 'windup' || e.state === 'strike') { e.state = 'walk'; e.atkCd = 0.7; }
+  ignite(e, burnSeconds);
+  hitstop = Math.max(hitstop, 0.05 + power * 0.05);
+  if (e.hp <= 0) killEnemy(e);
+}
+
+function killEnemy(e) {
+  if (e.state === 'dying') return;
+  e.state = 'dying';
+  e.t = 0;
+  stats.kills++;
+}
+
+function playerHit(dir) {
+  if (dissolve.state !== 'none' || ch.hurt > 0) return;
+  ch.hurt = 0.35;
+  ch.flash = 0.1;
+  ch.vx = dir * 95;
+  ch.vy = -70;
+  ch.onGround = false;
+  if (spell.state === 'charge') spell.state = 'idle';
+  stats.hitsTaken++;
+  shake = Math.max(shake, 2);
+  hitstop = Math.max(hitstop, 0.06);
+}
+
+function emberBurst(x, y, n, power) {
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI * Math.random();
+    const sp = (40 + Math.random() * 90) * (0.6 + power);
+    embers.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 20, life: 0.4 + Math.random() * 0.8, heat: 28 + ((Math.random() * 8) | 0), g: 1 });
+  }
+}
+
+function updateEnemies(dt) {
+  const mode = ENEMY_MODES[cfg.enemies];
+  if (mode.max > 0) {
+    spawnTimer -= dt;
+    const alive = enemies.filter((e) => e.state !== 'dying').length;
+    if (spawnTimer <= 0 && alive < mode.max) {
+      spawnEnemy();
+      spawnTimer = mode.every * (0.7 + Math.random() * 0.6);
+    }
+  }
+  for (const e of enemies) updateEnemy(e, dt);
+  // Fire spreads to ghouls that bump into a burning one.
+  for (const a of enemies) {
+    if (a.burn <= 0 || a.state === 'dying') continue;
+    for (const b of enemies) if (b !== a && b.burn <= 0 && Math.abs(a.x - b.x) < 8) ignite(b, 1.6);
+  }
+  for (let i = enemies.length - 1; i >= 0; i--) if (enemies[i].gone) enemies.splice(i, 1);
+  for (const a of scorches) a.t += dt;
+  for (let i = scorches.length - 1; i >= 0; i--) if (scorches[i].t > 9) scorches.splice(i, 1);
+}
+
+function updateEnemy(e, dt) {
+  e.t += dt;
+  e.flash = Math.max(0, e.flash - dt);
+  e.hurt = Math.max(0, e.hurt - dt);
+  e.atkCd -= dt;
+  const toP = ch.x - e.x;
+  const dist = Math.abs(toP);
+  const heroThere = dissolve.state === 'none' || dissolve.state === 'out';
+  let target = 0;
+
+  if (e.state === 'dying') {
+    // Drop to the knees, then burn away from the head down.
+    e.kneel = Math.min(1, e.kneel + dt * 2.5);
+    e.burn = Math.max(e.burn, 0.5);
+    e.char = Math.min(1, e.char + dt * 0.8);
+    if (e.t > 0.55) {
+      e.cut = clamp((e.t - 0.55) / 1.0, 0, 1);
+      if (e.cut >= 1) {
+        e.gone = true;
+        scorches.push({ x: e.x, t: 0 });
+        emberBurst(e.x, e.y - 4, 10, 0.3);
+      }
+    }
+  } else {
+    if (e.burn > 0) {
+      // Burning: lose health, char, and run around in a panic.
+      e.burn -= dt;
+      e.hp -= 15 * dt;
+      e.char = Math.min(1, e.char + dt * 0.22);
+      e.panicT -= dt;
+      if (e.panicT <= 0) {
+        const away = -Math.sign(toP || 1);
+        e.panicDir = Math.random() < 0.65 ? away : -away;
+        e.panicT = 0.35 + Math.random() * 0.7;
+      }
+      if (e.x < 12) e.panicDir = 1;
+      if (e.x > W - 12) e.panicDir = -1;
+      target = e.panicDir * e.speed * 2.1;
+      if (e.state !== 'walk') { e.state = 'walk'; e.t = 0; }
+      if (Math.random() < dt * 5) emberBurst(e.x + (Math.random() - 0.5) * 8, e.y - 10 - Math.random() * 25, 1, 0);
+    } else if (e.state === 'walk') {
+      e.facing = Math.sign(toP) || e.facing;
+      if (heroThere && dist < 11 * e.scale && e.atkCd <= 0 && e.hurt <= 0) { e.state = 'windup'; e.t = 0; }
+      else if (dist > 8) target = Math.sign(toP) * e.speed * (0.7 + 0.3 * Math.sin(e.phase * 0.5 + e.wobble)); // limp
+    } else if (e.state === 'windup') {
+      e.facing = Math.sign(toP) || e.facing;
+      if (e.t > 0.4) {
+        e.state = 'strike'; e.t = 0;
+        if (heroThere && dist < 15 * e.scale && ch.y > FEET_Y - 16) playerHit(e.facing);
+      }
+    } else if (e.state === 'strike' && e.t > 0.25) {
+      e.state = 'walk'; e.t = 0; e.atkCd = 0.9 + Math.random() * 0.6;
+    }
+    if (e.burn > 0 && target) e.facing = Math.sign(target);
+    if (e.hp <= 0) killEnemy(e);
+    // Aura: touching the burning hero sets a ghoul on fire.
+    if (cfg.effect === 'aura' && dissolve.state === 'none' && dist < 10) ignite(e, 1.5);
+  }
+
+  if (e.hurt > 0 || e.state === 'dying') target = 0;
+  e.vx = approach(e.vx, target, (e.hurt > 0 ? 110 : 170) * dt);
+  e.vy += GRAVITY * dt;
+  e.x += e.vx * dt;
+  e.y += e.vy * dt;
+  if (e.y >= FEET_Y) { e.y = FEET_Y; e.vy = 0; e.onGround = true; }
+  if (e.x > 10 && e.x < W - 10) e.entered = true;
+  if (e.entered) e.x = clamp(e.x, 8, W - 8);
+  const speed = Math.abs(e.vx);
+  e.phase += ((Math.PI * speed) / ((4 + speed * 0.08) * e.scale)) * dt;
+  computeEnemyPose(e, dt);
+}
+
+function computeEnemyPose(e, dt) {
+  const s = e.scale;
+  const f = e.facing;
+  const th = GHOUL.thigh * s;
+  const sh = GHOUL.shin * s;
+  const T = GHOUL.torso * s;
+  const speed = Math.abs(e.vx);
+  const a = Math.min(1, speed / 18);
+  const panic = e.burn > 0 && e.state !== 'dying';
+  const hurtK = clamp(e.hurt / 0.3, 0, 1);
+  const stride = (4 + speed * 0.08) * s;
+  const hipX = e.x;
+  const hipY = e.y - (th + sh) * 0.9 + e.kneel * th * 0.85 - Math.cos(2 * e.phase) * 0.8 * a;
+
+  const legs = [];
+  for (let i = 0; i < 2; i++) {
+    const ph = e.phase + i * Math.PI;
+    const stand = (i === 0 ? 2 : -1.8) * s;
+    let fx = hipX + f * (-Math.cos(ph) * (stride / 2) * a + stand * (1 - a));
+    let fy = e.y - Math.max(0, Math.sin(ph)) * 3 * s * a;
+    if (e.kneel > 0) fx = lerp(fx, hipX + f * (i === 0 ? 5 : -6) * s, e.kneel);
+    if (!e.onGround) fy = hipY + (th + sh) * 0.8;
+    legs.push(ik(hipX, hipY, fx, fy, th, sh, f));
+  }
+
+  // Target lean/arm angles by state, then smoothed so transitions read as motion.
+  let leanT = 0.42 + a * 0.08 + Math.sin(e.t * 1.7 + e.wobble) * 0.04;
+  let uaT = [1.15 + Math.sin(e.phase) * 0.3, 1.0 - Math.sin(e.phase) * 0.3];  // reaching forward
+  let faT = [1.55, 1.45];
+  if (e.state === 'windup') { leanT = lerp(leanT, 0.15, clamp(e.t / 0.25, 0, 1)); uaT = [2.7, 2.4]; faT = [3.1, 2.9]; }
+  if (e.state === 'strike') { leanT = 0.75; uaT = [0.9, 1.2]; faT = [0.4, 0.8]; }
+  if (panic) {
+    // Arms flailing over the head.
+    leanT = 0.05 + Math.sin(e.t * 9) * 0.12;
+    uaT = [2.7 + Math.sin(e.t * 15) * 0.45, 2.5 + Math.sin(e.t * 13 + 2) * 0.45];
+    faT = [3.0 + Math.sin(e.t * 17) * 0.6, 2.9 + Math.sin(e.t * 16 + 1) * 0.6];
+  }
+  if (hurtK > 0) {
+    // Thrown back by the hit.
+    leanT = lerp(leanT, -0.55, hurtK);
+    uaT = uaT.map((v, i) => lerp(v, i ? -0.9 : -0.4, hurtK));
+    faT = faT.map((v, i) => lerp(v, i ? -1.4 : -1.0, hurtK));
+  }
+  if (e.state === 'dying') { leanT = 0.9; uaT = [0.3, 0.2]; faT = [0.2, 0.1]; }
+  const sm = Math.min(1, dt * (hurtK > 0 ? 30 : 12));
+  e.lean = lerp(e.lean, leanT, sm);
+  e.ua = e.ua.map((v, i) => lerp(v, uaT[i], sm));
+  e.fa = e.fa.map((v, i) => lerp(v, faT[i], sm));
+
+  const lean = e.lean;
+  const up = [f * Math.sin(lean), -Math.cos(lean)];
+  const fw = [f * Math.cos(lean), Math.sin(lean)];
+  const neck = [hipX + up[0] * T, hipY + up[1] * T];
+  // The head juts forward of the neck and snaps back when hit.
+  const hl = lean * 0.3 - hurtK * 0.6;
+  const head = [neck[0] + f * (Math.sin(hl) * GHOUL.headR * s + 1.6 * s * (1 - hurtK)), neck[1] - Math.cos(hl) * GHOUL.headR * s * 0.85];
+  const shoulder = lerpPt([hipX, hipY], neck, 0.85);
+  const arms = [0, 1].map((i) => {
+    const el = [shoulder[0] + f * Math.sin(e.ua[i]) * GHOUL.upperArm * s, shoulder[1] + Math.cos(e.ua[i]) * GHOUL.upperArm * s];
+    const hd = [el[0] + f * Math.sin(e.fa[i]) * GHOUL.foreArm * s, el[1] + Math.cos(e.fa[i]) * GHOUL.foreArm * s];
+    return { sh: shoulder, el, hd };
+  });
+  e.pose = { f, s, T, hipX, hipY, neck, head, legs, arms, up, fw };
+}
+
+function drawGhoulArm(arm, back, s) {
+  seg(arm.sh, lerpPt(arm.sh, arm.el, 0.55), 1.9 * s, 1.6 * s, part('rags', back)); // torn sleeve
+  const skin = part('ghoul', back);
+  seg(lerpPt(arm.sh, arm.el, 0.5), arm.el, 1.4 * s, 1.2 * s, skin);
+  seg(arm.el, arm.hd, 1.2 * s, 1.0 * s, skin);
+  const dx = arm.hd[0] - arm.el[0];
+  const dy = arm.hd[1] - arm.el[1];
+  const d = Math.hypot(dx, dy) || 1;
+  const ux = dx / d;
+  const uy = dy / d;
+  const claw = part('bone', back);
+  seg(arm.hd, [arm.hd[0] + ux * 2.4 - uy * 0.9, arm.hd[1] + uy * 2.4 + ux * 0.9], 0.5, 0.3, claw);
+  seg(arm.hd, [arm.hd[0] + ux * 2.6 + uy * 0.7, arm.hd[1] + uy * 2.6 - ux * 0.7], 0.5, 0.3, claw);
+}
+
+function drawGhoulLeg(P, leg, back) {
+  const hip = [P.hipX, P.hipY];
+  const knee = [leg.jx, leg.jy];
+  const ankle = [leg.ex, leg.ey];
+  seg(hip, knee, 2.2 * P.s, 1.8 * P.s, part('rags', back));
+  const skin = part('ghoul', back);
+  seg(knee, ankle, 1.5 * P.s, 1.2 * P.s, skin);
+  seg([ankle[0] - P.f * 0.8, ankle[1] + 0.8], [ankle[0] + P.f * 3 * P.s, ankle[1] + 1.1], 1.2, 0.9, skin);
+}
+
+function drawEnemy(e) {
+  const P = e.pose;
+  if (!P) return;
+  const { f, s } = P;
+  const L = (a, b) => [P.hipX + P.fw[0] * a + P.up[0] * b, P.hipY + P.fw[1] * a + P.up[1] * b];
+  drawGhoulArm(P.arms[1], true, s);
+  drawGhoulLeg(P, P.legs[1], true);
+  drawGhoulLeg(P, P.legs[0], false);
+  // Hunched torso with a hump on the back.
+  const torso = part('rags');
+  for (let k = 0; k <= 20; k++) {
+    const t = k / 20;
+    const c = L(-1.4 * s * Math.sin(Math.PI * t), P.T * t);
+    disk(c[0], c[1], lerp(2.6, 3.3, Math.sin(Math.PI * t)) * s, torso);
+  }
+  // Torn hem and a rope belt.
+  poly([L(-3.2 * s, 1.5 * s), L(3.0 * s, 1.5 * s), L(3.2 * s, -3 * s), L(1.5 * s, -1.6 * s), L(0, -3.6 * s), L(-1.6 * s, -1.8 * s), L(-3.0 * s, -3.4 * s)], part('rags'));
+  seg(L(-3 * s, 1.2 * s), L(3 * s, 1.2 * s), 0.55, 0.55, part('rope'));
+  // Head, a strand of hair, a jaw that drops open when attacking, hurt or burning.
+  const [hx, hy] = P.head;
+  disk(hx, hy, GHOUL.headR * s, part('ghoul'));
+  seg([hx - f * 2.6 * s, hy - 2.8 * s], [hx - f * 5.2 * s, hy - 0.6 * s], 0.7, 0.4, part('rags'));
+  const open = e.state === 'windup' || e.state === 'strike' || e.burn > 0 || e.hurt > 0 || e.state === 'dying';
+  seg([hx + f * 0.5 * s, hy + 2.6 * s], [hx + f * 3.4 * s, hy + (open ? 4.2 : 2.8) * s], 1.1 * s, 0.9 * s, part('ghoul'));
+  if (open) {
+    const m = part('mouth');
+    plot(hx + f * 2.4 * s, hy + 2.4 * s, m);
+    plot(hx + f * 3.2 * s, hy + 2.6 * s, m);
+  }
+  const eye = part('eyeglow');
+  plot(hx + f * 2.0 * s, hy - 0.6 * s, eye);
+  plot(hx + f * 2.0 * s + f, hy - 0.6 * s, eye);
+  drawGhoulArm(P.arms[0], false, s);
+}
+
+// Dying ghouls burn away from the head down; the cut line is a heat source.
+function applyBurnAway() {
+  for (const e of enemies) {
+    if (e.cut === null) continue;
+    const top = Math.floor(e.y - 44 * e.scale);
+    const bottom = Math.ceil(e.y + 3);
+    const cut = lerp(top, bottom, easeInOut(e.cut));
+    const x0 = Math.max(0, Math.floor(e.x - 16));
+    const x1 = Math.min(W - 1, Math.ceil(e.x + 16));
+    for (let y = Math.max(0, top); y <= Math.min(H - 1, bottom); y++) {
+      for (let x = x0; x <= x1; x++) {
+        const i = y * W + x;
+        if (!mask[i] || owner[i] !== e.rid) continue;
+        if (y < cut) { mask[i] = 0; owner[i] = 0; }
+        else if (y < cut + 1.2) { col[i] = GLOW32; fire[i] = MAX_HEAT; }
+      }
+    }
+  }
+}
+
+// Burning ghouls are heat sources: their own pixels feed the fire.
+function seedEnemies() {
+  for (const e of enemies) {
+    if (e.burn <= 0 && e.state !== 'dying') continue;
+    const heat = e.state === 'dying' ? MAX_HEAT : Math.round(22 + 14 * Math.min(1, e.burn / 2));
+    const top = Math.max(0, Math.floor(e.y - 46 * e.scale));
+    const bottom = Math.min(H - 1, Math.ceil(e.y + 3));
+    const x0 = Math.max(0, Math.floor(e.x - 16));
+    const x1 = Math.min(W - 1, Math.ceil(e.x + 16));
+    for (let y = top; y <= bottom; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const i = y * W + x;
+        if (mask[i] && owner[i] === e.rid && fire[i] < heat && Math.random() < 0.7) fire[i] = heat;
+      }
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1023,6 +1403,31 @@ function mix(c, r, g, b, k) {
   return ((0xff << 24) | (Math.round(cb + (b - cb) * k) << 16) | (Math.round(cg + (g - cg) * k) << 8) | Math.round(cr + (r - cr) * k)) >>> 0;
 }
 
+// Contact shadows and the ash left by burnt ghouls.
+const ASH = hexRgb('#6a6168');
+function groundFx(bg, x, y, shadows) {
+  if (y >= GROUND) {
+    for (const s of shadows) {
+      if (s.k <= 0) continue;
+      const u = (x - s.x) / s.rx;
+      const v = (y - GROUND - 0.3) / 2.2;
+      if (u * u + v * v <= 1) bg = mix(bg, 0, 0, 0, s.k);
+    }
+  }
+  for (const a of scorches) {
+    const fade = 1 - a.t / 9;
+    const dx = x - a.x;
+    if (y >= GROUND) {
+      const u = dx / 12;
+      const v = (y - GROUND - 0.5) / 2.5;
+      if (u * u + v * v <= 1) bg = mix(bg, 8, 6, 8, 0.6 * fade);
+    } else if (Math.abs(dx) <= 4 - Math.abs(Math.round(dx * 0.4))) {
+      bg = mix(bg, ASH[0], ASH[1], ASH[2], 0.85 * fade); // little ash mound
+    }
+  }
+  return bg;
+}
+
 function compose() {
   const pal = PALETTES[cfg.palette];
   // Ground shadow: shrinks as the character rises.
@@ -1030,9 +1435,11 @@ function compose() {
   const rise = clamp((FEET_Y - ch.y) / 40, 0, 1);
   const rx = 11 * (1 - rise * 0.6);
   const shadowK = 0.55 * visible * (1 - rise * 0.5);
+  const shadows = [{ x: ch.x, rx, k: shadowK }];
+  for (const e of enemies) if (e.cut === null || e.cut < 0.85) shadows.push({ x: e.x, rx: 9 * e.scale, k: 0.5 });
 
   const fxPal = PAL32[cfg.palette];
-  const isOutline = (j) => mask[j] === 2 || mask[j] === 4;
+  const isOutline = (j) => mask[j] === 2;
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
       const i = y * W + x;
@@ -1041,7 +1448,7 @@ function compose() {
       if (m) {
         let c = col[i];
         // Rim light: body pixels next to burning outline pick up the fire color.
-        if (m === 1 || m === 3) {
+        if (m === 1) {
           let h = 0;
           if (isOutline(i - 1) && fire[i - 1] > h) h = fire[i - 1];
           if (isOutline(i + 1) && fire[i + 1] > h) h = fire[i + 1];
@@ -1057,11 +1464,7 @@ function compose() {
         continue;
       }
       let bg = BG[i];
-      if (shadowK > 0 && y >= GROUND && y <= GROUND + 2) {
-        const u = (x - ch.x) / rx;
-        const v = (y - GROUND - 0.3) / 2.2;
-        if (u * u + v * v <= 1) bg = mix(bg, 0, 0, 0, shadowK);
-      }
+      if (y >= GROUND - 1 && y <= GROUND + 2) bg = groundFx(bg, x, y, shadows);
       const v = fire[i];
       if (!v) { frame32[i] = bg; continue; }
       // Additive glow over the background.
@@ -1220,11 +1623,37 @@ function autopilotInput(dt) {
   ai.spellCd -= dt;
   const idle = { dir: 0, run: false, crouch: ai.crouch, jump: false, cast: false };
   if (ai.casting > 0) { ai.casting -= dt; return { ...idle, crouch: false, cast: true }; }
-  if (dissolve.state !== 'none' || spell.state !== 'idle') return idle;
+  if (dissolve.state !== 'none' || spell.state !== 'idle' || ch.hurt > 0) return idle;
+
+  // Combat: keep distance from the nearest ghoul and throw spells at it.
+  let foe = null;
+  for (const e of enemies) {
+    if (e.state === 'dying' || e.x < 4 || e.x > W - 4) continue;
+    if (!foe || Math.abs(e.x - ch.x) < Math.abs(foe.x - ch.x)) foe = e;
+  }
+  if (foe) {
+    const d = foe.x - ch.x;
+    const dist = Math.abs(d);
+    const cornered = (d > 0 && ch.x < 24) || (d < 0 && ch.x > W - 24);
+    if (dist < 22) {
+      if (ai.disCd < 0 && (cornered || Math.random() < dt * 3)) { startDissolve(); ai.disCd = 5 + Math.random() * 3; return idle; }
+      if (!cornered) return { dir: -Math.sign(d), run: true, crouch: false, jump: false, cast: false };
+    }
+    if (ai.spellCd < 0) {
+      ch.facing = Math.sign(d) || ch.facing;
+      ai.casting = clamp(dist / 150, 0.15, 0.95) + Math.random() * 0.15; // farther = more charge
+      ai.spellCd = 0.4 + Math.random() * 0.5;
+      return { ...idle, crouch: false, cast: true };
+    }
+    if (dist < 45 && !cornered) return { dir: -Math.sign(d), run: false, crouch: false, jump: false, cast: false };
+    ch.facing = Math.sign(d) || ch.facing;
+    return { ...idle, crouch: false };
+  }
+
   if (ai.wait > 0) {
     ai.wait -= dt;
     // Turn to the dummy and throw a spell, holding it a random time to vary the power.
-    if (ai.spellCd < 0 && Math.abs(dummy.x - ch.x) > 28) {
+    if (cfg.enemies === 'off' && ai.spellCd < 0 && Math.abs(dummy.x - ch.x) > 28) {
       ch.facing = Math.sign(dummy.x - ch.x);
       ai.casting = 0.25 + Math.random() * 0.9;
       ai.spellCd = 2.5 + Math.random() * 3;
@@ -1264,6 +1693,8 @@ const ui = {
   skeleton: document.getElementById('skeleton'),
   auto: document.getElementById('auto'),
   dissolve: document.getElementById('dissolve'),
+  enemies: document.getElementById('enemies'),
+  hud: document.getElementById('hud'),
   flamesVal: document.getElementById('flamesVal'),
   stepVal: document.getElementById('stepVal'),
   speedVal: document.getElementById('speedVal'),
@@ -1284,6 +1715,19 @@ ui.shading.addEventListener('change', () => { cfg.shading = ui.shading.checked; 
 ui.skeleton.addEventListener('change', () => { cfg.skeleton = ui.skeleton.checked; });
 ui.auto.addEventListener('change', () => { cfg.auto = ui.auto.checked; ai.target = null; ai.wait = 0.3; });
 ui.dissolve.addEventListener('click', startDissolve);
+ui.enemies.addEventListener('change', () => {
+  cfg.enemies = ui.enemies.value;
+  if (cfg.enemies === 'off') enemies.length = 0;
+  spawnTimer = 0.8;
+});
+
+let hudText = '';
+function updateHud() {
+  const t = cfg.enemies === 'off'
+    ? `Boneco atingido: ${dummy.hits}`
+    : `Queimados: ${stats.kills} · Golpes recebidos: ${stats.hitsTaken}`;
+  if (t !== hudText) { hudText = t; ui.hud.textContent = t; }
+}
 
 // ---------------------------------------------------------------------------
 // Loop: fixed 60 Hz physics, fire at 30 Hz (the chunky DOOM cadence)
@@ -1292,6 +1736,8 @@ let simTime = 0;
 let tickCount = 0;
 
 function tick() {
+  // Hit-stop: freeze the world for a few frames so a hit lands with weight.
+  if (hitstop > 0) { hitstop -= DT; return; }
   const input = cfg.auto ? autopilotInput(DT) : keyboardInput();
   updateCharacter(DT, input);
   updateSpell(DT, input.cast);
@@ -1299,6 +1745,7 @@ function tick() {
   computePose(simTime);
   updateSecondary(simTime, DT);
   updateProjectiles(DT);
+  updateEnemies(DT);
   rasterize();
   buildFx();
   if (tickCount % 2 === 0) {
@@ -1317,6 +1764,7 @@ function frame(now) {
   last = now;
   while (acc >= DT) { tick(); acc -= DT; }
   draw();
+  updateHud();
 }
 
 new ResizeObserver(() => { fitCanvas(); if (pose) draw(); }).observe(canvas);

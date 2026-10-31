@@ -1,6 +1,6 @@
 # Fire Walker
 
-Um personagem pixelado animado **sem nenhum quadro desenhado à mão**, que lança magias num boneco de treino. A silhueta dele, a magia e as explosões são fontes de calor do [fogo do DOOM](../doom-fire). Canvas 2D puro, sem dependências.
+Um personagem pixelado animado **sem nenhum quadro desenhado à mão**, que enfrenta carniçais com magia de fogo. Quando são atingidos, eles sentem o golpe e começam a queimar. A silhueta do herói, a magia, as explosões e os inimigos em chamas são todos fontes de calor do [fogo do DOOM](../doom-fire). Canvas 2D puro, sem dependências.
 
 ## Como rodar
 
@@ -68,6 +68,21 @@ Segure `F` (ou o botão **Magia**) para carregar e solte para lançar. Tudo que 
 
 O núcleo do orbe, do projétil e das brasas é desenhado por cima de tudo, com a cor da paleta. O brilho em volta é o próprio fogo. Trocando a paleta, a magia vira fogo, energia, veneno ou sombra.
 
+### 5. Inimigos que sentem e queimam
+
+Carniçais entram pelas bordas, mancando e corcundas, com braços compridos esticados para a frente. São animados pelo mesmo sistema do herói (fase de caminhada, IK de dois ossos, ângulos de braço suavizados), só que com outras proporções e outro jeito de andar. Quando chegam perto, erguem as garras e golpeiam. O herói sente o golpe também: flash branco, corpo jogado para trás e um empurrão no ar.
+
+Quando um carniçal é atingido:
+
+| Momento | O que acontece |
+|---|---|
+| **Impacto** | O jogo congela por alguns quadros (*hit-stop*), o corpo dele pisca branco, o tronco e a cabeça são jogados para trás, os braços se abrem e ele é empurrado. Golpes carregados chegam a levantá-lo do chão |
+| **Queimando** | Os pixels do corpo dele viram fonte de calor do fogo. Ele entra em pânico, agitando os braços sobre a cabeça e correndo sem rumo, e solta brasas. O corpo vai escurecendo, com brasas piscando nas rachaduras |
+| **Contágio** | Um carniçal em chamas incendeia quem encostar nele; com o efeito **Aura**, encostar no herói também |
+| **Morte** | Cai de joelhos e queima de cima para baixo: a linha de corte é fonte de calor. Sobra um montinho de cinzas no chão, que some aos poucos |
+
+O dano vem do golpe direto, dos respingos da explosão e da queima contínua. Um tiro carregado ao máximo quase sempre mata; dois tiros rápidos também. Em **Inimigos** dá para escolher Poucos, Muitos ou Desligados (aí volta o boneco de treino). O piloto automático mantém distância, carrega mais a magia quanto mais longe está o alvo e se teleporta quando fica encurralado.
+
 ## Controles
 
 | Tecla | Ação |
@@ -80,4 +95,4 @@ O núcleo do orbe, do projétil e das brasas é desenhado por cima de tudo, com 
 | `E` | Dissolver e teleportar |
 | `K` | Mostrar o esqueleto |
 
-No celular aparecem botões na tela, e a câmera dá zoom e segue o personagem. O **piloto automático** anda, corre, pula, lança magias no boneco e se teleporta sozinho até você usar um controle.
+No celular aparecem botões na tela, e a câmera dá zoom e segue o personagem. O **piloto automático** luta sozinho (ou anda e treina no boneco quando os inimigos estão desligados) até você usar um controle.
