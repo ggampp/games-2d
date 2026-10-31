@@ -254,6 +254,13 @@ function sfx(name, o = {}) {
       tone(d, { f0: 120, f1: 35, dur: (0.35 + p * 0.35) * k, vol: (0.3 + p * 0.25) * k });
       break;
     }
+    case 'draw': {
+      // The blade sliding out of the scabbard.
+      const d = out(x);
+      noise(d, { ft: 'bandpass', f0: 2500, f1: 5500, dur: 0.16, vol: 0.06, q: 3 });
+      tone(d, { type: 'square', f0: 2600, dur: 0.25, vol: 0.012, lp: 4000, ft: 'bandpass', q: 10, t: audio.ctx.currentTime + 0.12 });
+      break;
+    }
     case 'swing': {
       // Heavier blades whoosh lower.
       const d = out(x);
