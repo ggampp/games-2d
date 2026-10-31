@@ -85,7 +85,7 @@
     <canvas id="stage" aria-label="Personagem pixelado animado proceduralmente com efeito de fogo"></canvas>
     <div class="title">
       <h1>FIRE WALKER</h1>
-      <p>Nenhum quadro desenhado à mão: um esqueleto de 11 pontos, senos e IK, rasterizado em 192×108. A silhueta vira a fonte de calor do fogo do DOOM.</p>
+      <p>Nenhum quadro desenhado à mão: um esqueleto, senos e IK, desenhado em pixels e sombreado a cada quadro. A silhueta vira a fonte de calor do fogo do DOOM.</p>
     </div>
     <div class="touch" aria-hidden="true">
       <div>
@@ -116,8 +116,9 @@
       </select>
     </label>
     <label>Chamas <input id="flames" type="range" min="1" max="4" step="1" value="2" /> <b id="flamesVal">2</b></label>
-    <label>Passo <input id="step" type="range" min="0" max="6" step="1" value="3" /> <b id="stepVal">3</b></label>
-    <label>Velocidade <input id="speed" type="range" min="12" max="45" step="1" value="28" /> <b id="speedVal">28</b></label>
+    <label>Passo <input id="step" type="range" min="0" max="8" step="1" value="4" /> <b id="stepVal">4</b></label>
+    <label>Velocidade <input id="speed" type="range" min="16" max="60" step="1" value="38" /> <b id="speedVal">38</b></label>
+    <label><input id="shading" type="checkbox" checked /> Sombreado</label>
     <label><input id="skeleton" type="checkbox" /> <span class="bone">Esqueleto</span></label>
     <label><input id="auto" type="checkbox" checked /> Piloto automático</label>
     <button id="dissolve">Dissolver</button>
