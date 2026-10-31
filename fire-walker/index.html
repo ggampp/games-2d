@@ -57,6 +57,7 @@
     }
     .touch button:active { border-color: var(--accent); background: rgba(224, 112, 44, .25); }
     @media (pointer: coarse) { .touch { display: flex; } }
+    @media (max-width: 420px) { .touch button { width: 44px; height: 44px; font-size: 11px; } .touch div { gap: 4px; } }
     .banner {
       position: absolute; left: 0; right: 0; top: 38%;
       text-align: center; pointer-events: none;
@@ -119,6 +120,7 @@
       </div>
       <div>
         <button data-hold="Run">Correr</button>
+        <button data-hold="Sword">Espada</button>
         <button data-hold="Cast">Magia</button>
         <button data-hold="ArrowUp">Pular</button>
       </div>
@@ -164,14 +166,16 @@
     <label><input id="shading" type="checkbox" checked /> Sombreado</label>
     <label><input id="skeleton" type="checkbox" /> <span class="bone">Esqueleto</span></label>
     <label><input id="auto" type="checkbox" checked /> Piloto automático</label>
+    <button id="sword" data-hold="Sword" title="Aperte no ritmo para encadear 3 golpes">Espada (J)</button>
     <button id="cast" data-hold="Cast" title="Segure para carregar, solte para lançar">Magia (segure)</button>
     <button id="dissolve">Dissolver</button>
-    <span class="hint">←→ andar · Shift correr · ↑ pular · ↓ agachar (desvia de orbes) · F segurar: magia · E dissolver · 1 2 3 personagem · K esqueleto</span>
+    <span class="hint">←→ andar · Shift correr · ↑ pular · ↓ agachar (desvia de orbes) · J espada (combo) · F segurar: magia · E dissolver · 1 2 3 personagem · K esqueleto</span>
   </div>
 
   <script src="audio.js"></script>
   <script src="walker.js"></script>
   <script src="heroes.js"></script>
+  <script src="melee.js"></script>
   <script src="enemies.js"></script>
   <script src="boss.js"></script>
   <script src="world.js"></script>

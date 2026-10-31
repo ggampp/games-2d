@@ -7,11 +7,17 @@
 // ---------------------------------------------------------------------------
 const keys = new Set();
 let jumpPressed = false;
+let swordPressed = false;
 const HERO_KEYS = { Digit1: 'andarilho', Digit2: 'bruxa', Digit3: 'paladino' };
-const MOVE_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD', 'KeyW', 'KeyS', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyE', 'KeyF', 'KeyQ']);
+const MOVE_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD', 'KeyW', 'KeyS', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyE', 'KeyF', 'KeyQ', 'KeyJ', 'KeyX']);
 
 function takeControl() {
-  if (cfg.auto) { cfg.auto = false; ui.auto.checked = false; }
+  if (!cfg.auto) return;
+  cfg.auto = false;
+  ui.auto.checked = false;
+  // Drop a spell the autopilot was charging so the player's first command goes through.
+  ai.casting = 0;
+  if (spell.state === 'charge') spell.state = 'idle';
 }
 
 window.addEventListener('keydown', (e) => {
@@ -19,6 +25,7 @@ window.addEventListener('keydown', (e) => {
   if (MOVE_KEYS.has(e.code)) { e.preventDefault(); takeControl(); }
   keys.add(e.code);
   if (!e.repeat && (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space')) jumpPressed = true;
+  if (!e.repeat && (e.code === 'KeyJ' || e.code === 'KeyX')) swordPressed = true;
   if (!e.repeat && e.code === 'KeyE') startDissolve();
   if (!e.repeat && e.code === 'KeyK') { cfg.skeleton = !cfg.skeleton; ui.skeleton.checked = cfg.skeleton; }
   if (!e.repeat && HERO_KEYS[e.code]) { ui.hero.value = HERO_KEYS[e.code]; applyHero(); }
@@ -34,6 +41,7 @@ document.querySelectorAll('[data-hold]').forEach((btn) => {
     btn.setPointerCapture?.(e.pointerId);
     keys.add(code);
     if (code === 'ArrowUp') jumpPressed = true;
+    if (code === 'Sword') swordPressed = true;
   };
   const up = () => keys.delete(code);
   btn.addEventListener('pointerdown', down);
@@ -51,8 +59,10 @@ function keyboardInput() {
     crouch: keys.has('ArrowDown') || keys.has('KeyS') || keys.has('Crouch'),
     jump: jumpPressed,
     cast: keys.has('KeyF') || keys.has('KeyQ') || keys.has('Cast'),
+    sword: swordPressed,
   };
   jumpPressed = false;
+  swordPressed = false;
   return input;
 }
 
@@ -112,6 +122,12 @@ function autopilotInput(dt) {
         return { ...idle, crouch: false, jump: true, cast: true };
       }
     } else {
+      // Up close against something small: use the sword (keeps pressing to chain the combo).
+      const small = e.type === 'ghoul' || e.type === 'cultist' || (e.def.fly && e.y > ch.y - 34);
+      if (small && dist < 20 + weapon().len * 0.6 && !low) {
+        ch.facing = Math.sign(d) || ch.facing;
+        return { ...idle, crouch: false, sword: true };
+      }
       if (dist < 22 + (low ? 12 : 0)) {
         if (ai.disCd < 0 && (cornered || low || Math.random() < dt * 3)) { startDissolve(); ai.disCd = 5 + Math.random() * 3; return idle; }
         if (!cornered) return { dir: -Math.sign(d), run: true, crouch: false, jump: false, cast: false };
@@ -260,9 +276,11 @@ function tick() {
   const input = cfg.auto ? autopilotInput(DT) : keyboardInput();
   updateCharacter(DT, input);
   updateSpell(DT, input.cast);
+  updateMelee(DT, input.sword);
   updateDissolve(DT);
   computePose(simTime);
   updateSecondary(simTime, DT);
+  if (melee.active) sweepBlade();
   updateCamera(DT);
   updateProjectiles(DT);
   updateHeroWaves(DT);

@@ -16,6 +16,7 @@ npx serve .        # ou: python3 -m http.server
 |---|---|
 | `audio.js` | Áudio procedural (Web Audio API): efeitos sonoros sintetizados e o sequenciador de música |
 | `walker.js` | Núcleo: configuração, paletas, herói (física, pose, desenho do Andarilho), magia, rasterização por id de parte e sombreamento, simulação do fogo |
+| `melee.js` | Ataque com espada: combo de 3 golpes, golpe no ar, acerto ao longo da lâmina, rebate de orbes e arco de fogo |
 | `heroes.js` | Personagens jogáveis: atributos, movimento secundário, desenho da Bruxa e do Paladino, e as magias de cada um |
 | `enemies.js` | Tipos de inimigo, ondas, vida, golpes, queima, projéteis e onda de choque |
 | `boss.js` | O Guardião do Portão: arena, ataques, fúria, meteoros |
@@ -178,6 +179,29 @@ Quando o herói cai, a música é abafada por um filtro por alguns segundos.
 
 Em **Som** liga e desliga tudo; **Música** e **Efeitos** ajustam os volumes.
 
+### 12. Espada
+
+Aperte `J` (ou `X`, ou o botão **Espada**) para atacar corpo a corpo. Apertar de novo durante um golpe já guarda o próximo, até três:
+
+| Golpe | Movimento | Efeito |
+|---|---|---|
+| 1 | Corte diagonal de cima para baixo | 22 de dano, empurra pouco para manter o alvo ao alcance |
+| 2 | Corte ascendente de volta | 22 de dano |
+| 3 | Corte horizontal pesado com avanço | 38 de dano, faz o alvo cambalear (inclusive o Guardião) e o deixa em chamas |
+| No ar | Corte descendente | 28 de dano e fogo |
+
+Cada golpe tem preparação, movimento e recuperação. São duas poses de braço (preparação e acompanhamento) misturadas à pose procedural, com a mesma convenção de ângulos da magia, e o corpo inclina e as pernas se firmam. Durante o movimento, o antebraço, a mão e a lâmina, além do arco que a ponta percorreu desde o quadro anterior, são testados contra os inimigos, o boneco e os orbes do cultista. A espada **rebate os orbes** se o golpe chegar a tempo, uns 0,25–0,45 s antes do impacto. Cada acerto tem congelamento, faíscas e tremor, e o inimigo sente o golpe como com a magia. A ponta deixa um **arco de fogo** do mesmo algoritmo, com um traço brilhante por cima.
+
+Cada personagem tem sua lâmina:
+
+| Personagem | Lâmina | Alcance | Velocidade | Dano |
+|---|---|---|---|---|
+| Andarilho | Saca a espada das costas (o cabo some da bainha) | 11 px | normal | ×1 |
+| Bruxa | Adaga mágica luminosa | 8 px | mais rápida | ×0,75 |
+| Paladino | Espada longa | 14 px | mais lenta | ×1,35 |
+
+A espada fica na mão por um instante depois do último golpe. Golpe e magia não se misturam: um espera o outro terminar. O piloto automático usa a espada contra carniçais, cultistas e morcegos que chegam perto, e a magia contra os grandes.
+
 ## Controles
 
 | Tecla | Ação |
@@ -186,6 +210,7 @@ Em **Som** liga e desliga tudo; **Música** e **Efeitos** ajustam os volumes.
 | `Shift` | Correr |
 | `↑` / `W` / `Espaço` | Pular |
 | `↓` / `S` | Agachar (desvia dos orbes do cultista) |
+| `J` / `X` | Espada (aperte de novo durante o golpe para o combo) |
 | `F` / `Q` (segurar) | Carregar e lançar a magia |
 | `E` | Dissolver e teleportar |
 | `1` `2` `3` | Andarilho, Bruxa, Paladino |

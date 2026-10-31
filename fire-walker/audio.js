@@ -194,7 +194,7 @@ const gong = (d, base, dur, vol, t) => [1, 1.42, 2.03, 2.7, 3.9].forEach((m, i) 
 // ---------------------------------------------------------------------------
 // Sound effects
 // ---------------------------------------------------------------------------
-const SFX_GAP = { step: 0.1, crackle: 0.01, ignite: 0.08, hit: 0.03, meteor: 0.1, land: 0.1, explode: 0.04 };
+const SFX_GAP = { slash: 0.02, step: 0.1, crackle: 0.01, ignite: 0.08, hit: 0.03, meteor: 0.1, land: 0.1, explode: 0.04 };
 
 function sfx(name, o = {}) {
   if (!audio.ctx || !audio.enabled || audio.ctx.state !== 'running') return;
@@ -252,6 +252,27 @@ function sfx(name, o = {}) {
       const k = o.small ? 0.5 : 1;
       noise(d, { f0: o.small ? 2600 : 1600, f1: 120, dur: (0.4 + p * 0.6) * k + 0.1, vol: (0.25 + p * 0.3) * k });
       tone(d, { f0: 120, f1: 35, dur: (0.35 + p * 0.35) * k, vol: (0.3 + p * 0.25) * k });
+      break;
+    }
+    case 'swing': {
+      // Heavier blades whoosh lower.
+      const d = out(x);
+      const low = 1 / (o.power || 1);
+      noise(d, { ft: 'bandpass', f0: 700 * low, f1: 3200 * low, dur: 0.13, vol: 0.16, q: 1.6 });
+      break;
+    }
+    case 'slash': {
+      const d = out(x, 0.15);
+      noise(d, { f0: 3000, f1: 500, dur: 0.12, vol: 0.2 });
+      thud(d, 0.18 + p * 0.15, 180);
+      tone(d, { type: 'square', f0: 1900, dur: 0.12, vol: 0.025, lp: 3500, ft: 'bandpass', q: 7 });
+      break;
+    }
+    case 'parry': {
+      const d = out(x, 0.4);
+      tone(d, { type: 'square', f0: 1480, dur: 0.5, vol: 0.05, lp: 2600, ft: 'bandpass', q: 9 });
+      tone(d, { type: 'square', f0: 2210, dur: 0.35, vol: 0.035, lp: 3600, ft: 'bandpass', q: 9 });
+      noise(d, { ft: 'highpass', f0: 4000, dur: 0.08, vol: 0.08 });
       break;
     }
     case 'ignite': noise(out(x), { ft: 'bandpass', f0: 700, f1: 2600, dur: 0.3, vol: 0.12, a: 0.03, q: 1.5 }); break;
