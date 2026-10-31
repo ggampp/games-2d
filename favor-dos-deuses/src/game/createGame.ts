@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { GAME_WIDTH, GAME_HEIGHT } from "../data/constants";
 import { BootScene } from "./scenes/BootScene";
 import { PreloadScene } from "./scenes/PreloadScene";
+import { TitleScene } from "./scenes/TitleScene";
 import { HubScene } from "./scenes/HubScene";
 import { WildsScene } from "./scenes/WildsScene";
 import { DungeonScene } from "./scenes/DungeonScene";
@@ -19,8 +20,16 @@ export function createGame(parent: HTMLElement): Phaser.Game {
       mode: Phaser.Scale.FIT,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [BootScene, PreloadScene, HubScene, WildsScene, DungeonScene, UnderworldScene],
+    physics: {
+      default: "arcade",
+      arcade: {
+        gravity: { x: 0, y: 0 },
+        debug: false,
+      },
+    },
+    scene: [BootScene, PreloadScene, TitleScene, HubScene, WildsScene, DungeonScene, UnderworldScene],
     backgroundColor: "#0a0a12",
     audio: { noAudio: true },
+    input: { keyboard: { capture: [32, 37, 38, 39, 40] } },
   });
 }

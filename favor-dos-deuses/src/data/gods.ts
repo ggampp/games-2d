@@ -38,3 +38,4 @@ export const GODS: Record<string, God> = {
 export const DEVOTION_MILESTONES = [25, 50, 75, 100];
 export const JEALOUSY_THRESHOLD = 40;
 export const JEALOUSY_DIFF_TRIGGER = 30;
+export const OFFERING_AMOUNT = 15;

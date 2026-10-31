@@ -6,140 +6,79 @@ Action-RPG top-down inspirado na mitologia de Theros (MTG). A fantasia central: 
 
 ```bash
 npm install
-npm run dev
+npm run dev      # http://127.0.0.1:3001
+npm run build    # tsc + vite build -> dist/
 ```
-
-O jogo abrirá em `http://127.0.0.1:3001`
 
 ## Controles
 
 | Tecla | Ação |
 |-------|------|
 | WASD / Setas | Mover |
-| Espaço | Atacar |
-| Shift | Esquivar (dodge roll) |
-| E | Interagir |
-| 1-4 | Ativar Bestow (bênção) |
+| Espaço ou J | Atacar (arco de 140° na direção em que o herói olha; parado, mira no inimigo mais próximo) |
+| Shift ou K | Esquivar (invulnerável durante o rolamento) |
+| E / Enter | Interagir (o rótulo `[E] ...` aparece sobre o herói quando há algo perto) |
+| 1-4 | Ativar bênção equipada |
+| Esc / P | Pausar (mostra controles e as bênçãos equipadas) |
+| ↑↓ + Enter, ou 1-9 | Navegar diálogos (Esc fecha) |
 
-## O que o MVP Demonstra
+O progresso (Devoção, bênçãos, vida, barganha) é salvo automaticamente no `localStorage` a cada oferenda, transição de área e morte. A tela de título oferece **Continuar** quando há save.
 
-### Loop Completo
-1. **Hub (Setessa)** - Vila central com templos de Nylea e Heliod
-2. **Floresta Selvagem** - Área de caça com criaturas (javalis, lobos, sombras)
-3. **Ruínas Antigas** - Dungeon com mortos-vivos (esqueletos, harpias)
-4. **Mundo Inferior** - Cena de morte com escolha de escape ou barganha
+## O Loop
 
-### Sistema de Devoção
-- Duas barras: Nylea (verde/caça/floresta) e Heliod (dourado/sol/justiça)
-- Ganhe Devoção derrotando inimigos específicos ou fazendo oferendas nos templos/altares
-- Milestones em 25/50 desbloqueiam Bestows (poderes divinos)
+1. **Setessa (hub)** — vila com a taverna (descansar cura toda a vida; rumores explicam as regras), templos de Nylea e Heliod (oferendas) e portais para as duas áreas.
+2. **Floresta Selvagem** — mundo 1200×900 com câmera. Cace 3 criaturas (javalis, lobos, sombras) e faça a oferenda no altar de Nylea.
+3. **Ruínas Antigas** — masmorra 1120×736 com salas, corredores, tochas, armadilhas de espinhos e um baú. Purifique 4 mortos-vivos e faça a oferenda no altar de Heliod.
+4. **Mundo Inferior** — ao morrer: **Escapar** (-20 Devoção com cada deus, volta com 50% de vida) ou **Barganhar com Erebos** (vida cheia, mas uma Sombra de Erebos passa a caçar você em todas as áreas até ser derrotada).
 
-### Bestows (Bênçãos)
-- **Flecha de Nylea** (25 Devoção) - Boost de dano
-- **Passo Florestal** (50 Devoção) - Boost de velocidade
-- **Raio Solar** (25 Devoção) - Cura
-- **Égide da Luz** (50 Devoção) - Escudo protetor
+### Devoção e Bênçãos
 
-### Ciúme Divino
-- Quando sua Devoção com um deus sobe muito enquanto o rival também está alto, o deus rival fica ciumento
-- Mensagens de aviso aparecem antes de eventos de ciúme
-- Adiciona tensão ao sistema de progressão
+- Duas barras (Nylea verde, Heliod dourado) com marcador do próximo marco.
+- Inimigos dão Devoção ao deus correspondente; oferendas dão +15.
+- 25 e 50 de Devoção desbloqueiam bênçãos, equipadas automaticamente em slots 1-4 com cooldown visível no HUD:
+  - 🏹 **Flecha de Nylea** (25) — dano ×1.5 por 5 s
+  - 🦌 **Passo Florestal** (50) — velocidade ×1.8 por 4 s
+  - ☀️ **Raio Solar** (25) — cura 30
+  - 🛡️ **Égide da Luz** (50) — bloqueia o próximo golpe
+- **Ciúme divino**: subir muito com um deus enquanto o rival está ≥ 40 gera um aviso; na oferenda seguinte o rival pune — Nylea lança espinhos (dano ao longo do tempo), Heliod cega (visão reduzida por alguns segundos).
 
-### Sistema de Morte
-- Ao morrer, você vai para o Mundo Inferior
-- **Escapar**: Perde 20 de Devoção com cada deus, volta com 50% HP
-- **Barganhar com Erebos**: Volta com HP cheio, mas há consequências narrativas
+### Combate
 
-## Estrutura do Projeto
+- Física Arcade: herói e inimigos colidem com prédios, árvores, pedras e paredes.
+- Inimigos têm estados (patrulha → perseguição → **aviso "!"** → golpe → recuperação). O aviso dá tempo de esquivar.
+- Feedback: hit-stop, tremor de câmera, números de dano, barra de vida do inimigo, knockback, flash vermelho ao ser atingido, aviso de vida baixa.
+- Buffer de entrada no ataque e captura de teclas por evento (toques rápidos nunca se perdem).
 
-```
-favor-dos-deuses/
-├── src/
-│   ├── main.ts              # Entry point
-│   ├── styles.css           # UI styles
-│   ├── data/                # Game data
-│   │   ├── bestows.ts       # Bestow definitions
-│   │   ├── constants.ts     # Game constants
-│   │   ├── enemies.ts       # Enemy configs
-│   │   └── gods.ts          # God definitions
-│   ├── entities/            # Game entities
-│   │   ├── Enemy.ts
-│   │   └── Player.ts
-│   ├── game/
-│   │   ├── createGame.ts    # Phaser config
-│   │   └── scenes/          # Game scenes
-│   │       ├── BaseGameScene.ts
-│   │       ├── BootScene.ts
-│   │       ├── DungeonScene.ts
-│   │       ├── HubScene.ts
-│   │       ├── PreloadScene.ts
-│   │       ├── UnderworldScene.ts
-│   │       └── WildsScene.ts
-│   ├── systems/             # Game systems
-│   │   ├── BestowSystem.ts
-│   │   ├── CombatSystem.ts
-│   │   └── DevotionSystem.ts
-│   └── ui/                  # UI components
-│       ├── Dialog.ts
-│       ├── Hud.ts
-│       └── MessageToast.ts
-└── public/
-    └── assets/              # Placeholder for CraftPix assets
-        ├── audio/
-        ├── sprites/
-        └── tilemaps/
-```
+## Assets (CraftPix)
 
-## Scripts
+Os packs **não** são redistribuídos (licença). Coloque os PNGs em `public/assets/{forest,dungeon,tavern}/` conforme `assets-raw/README.txt`. Sem eles, o jogo roda com gráficos gerados por código.
 
-- `npm run dev` - Servidor de desenvolvimento
-- `npm run build` - Build de produção
-- `npm run preview` - Preview do build
+Os sheets da CraftPix não são grades uniformes, por isso `src/data/assets.ts` guarda **coordenadas medidas em pixels** para cada recorte (taverna, casas, arcos, estátuas, caixões, baú, tochas 5 variantes × 6 frames…). Uso por cena:
 
-## Assets
+| Cena | Assets |
+|------|--------|
+| Herói | `Animation_knight.png` (10 frames × 2 linhas de 40×40: idle / andar) |
+| Setessa | `Walls_street.png` (paralelepípedo, pedra clara, folhas), `Exterior.png` (taverna, casas, cerca, caixotes, barris, mesas), NPCs animados (`Animation_host`, `Lute_player`, `watcher`), `Ground_grass.png` (jardim de Nylea), estátua/pilares/arco das ruínas |
+| Floresta | `Ground_grass.png` (grama, caminho de terra em manchas 3×3/4×4), `objects/` (árvores, arbustos, pedras, cogumelos, troncos, ruínas) |
+| Ruínas | `walls_floor.png` (piso, parede norte 3 tiles, frente sul, colunas finas, laje, rachaduras), `torches.png`, `coffins.png`, `other_objects.png`, `Arches_columns.png`, `chest_lever.png`, `Spikes.png`, `scull_bas-relief.png` |
+| Sombras | `ghost_trap.png` (frames 1-3) |
+| Mundo Inferior | `Statue_fire.png` (Erebos), `ghost_trap.png` (alma) |
 
-O jogo usa gráficos placeholder gerados proceduralmente por padrão. Para visuais melhores, você pode adicionar packs CraftPix localmente.
+Inimigos sem arte no pack (javali, lobo, esqueleto, harpia) são pixel art em texto em `src/data/pixelart.ts`, 2 frames cada.
 
-### Usando Placeholders (padrão)
-O jogo funciona sem arquivos externos - retângulos coloridos representam tiles, árvores e inimigos.
+Os chãos são desenhados numa única `RenderTexture` por cena (`src/game/tiles.ts`), não em milhares de sprites.
 
-### Usando CraftPix Tilesets (opcional)
-Coloque os assets CraftPix em `public/assets/` seguindo esta estrutura:
+## Estrutura
 
 ```
-public/assets/
-├── forest/
-│   ├── Ground_grass.png          # Tileset de chão 16x16
-│   ├── Objects.png               # Objetos diversos
-│   ├── Water_coasts.png          # Tiles de água
-│   └── objects/
-│       ├── Tree1.png … Tree14.png
-│       ├── Bush1.png … Bush3.png
-│       ├── Stone1.png, Stone2.png
-│       └── Mushroom1.png, Mushroom2.png
-├── dungeon/
-│   ├── walls_floor.png           # Tileset principal 16x16
-│   ├── doors.png
-│   ├── stairs.png
-│   ├── coffins.png
-│   ├── torches.png
-│   ├── other_objects.png
-│   └── Spikes.png
-└── tavern/
-    ├── Exterior.png              # Tileset exterior 16x16
-    ├── Interior_1st_floor.png
-    ├── Walls_street.png
-    ├── Walls_interior.png
-    ├── door_small.png
-    └── Decorative_cracks.png
+src/
+├── main.ts                 # bootstrap, overlays DOM (pausa, cegueira, flash, banner)
+├── data/                   # assets (recortes medidos), bênçãos, constantes, inimigos, deuses, pixel art
+├── entities/               # Player (Arcade sprite, esquiva, buffer) e Enemy (FSM com telegraph)
+├── game/
+│   ├── createGame.ts       # config Phaser (Arcade physics)
+│   ├── tiles.ts            # TileCanvas (RenderTexture)
+│   └── scenes/             # Boot, Preload, Title, Hub, Wilds, Dungeon, Underworld, BaseGameScene
+├── systems/                # Devotion, Bestow, Combat (juice), Save
+└── ui/                     # Hud, Dialog (teclado), MessageToast (pilha)
 ```
-
-**Importante:** Assets CraftPix são **locais apenas** e não devem ser commitados (licença proíbe redistribuição). O `.gitignore` já exclui essas pastas.
-
-O jogo detecta automaticamente quais assets estão disponíveis e usa placeholders para os faltantes.
-
-## Stack
-
-- **Phaser 3** - Game engine
-- **Vite** - Build tool
-- **TypeScript** - Linguagem

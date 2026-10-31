@@ -1,11 +1,17 @@
 import Phaser from "phaser";
-import { BaseGameScene } from "./BaseGameScene";
-import { COLORS, GAME_WIDTH, GAME_HEIGHT, UI_STRINGS } from "../../data/constants";
+import { BaseGameScene, type Interactable } from "./BaseGameScene";
+import { COLORS, GAME_WIDTH, GAME_HEIGHT, UI_STRINGS, DEPTH } from "../../data/constants";
 import { GODS } from "../../data/gods";
-import { assetTracker } from "../../data/assets";
+import { assetTracker, TILES } from "../../data/assets";
+import { TileCanvas } from "../tiles";
 
+/**
+ * Setessa — vila-hub. Templos de Nylea (esq.) e Heliod (dir.), taverna
+ * ao centro, portais para a Floresta (esq. inferior) e Ruínas (dir. inferior).
+ */
 export class HubScene extends BaseGameScene {
-  private locationText!: Phaser.GameObjects.Text;
+  protected readonly locationName = UI_STRINGS.hub_name;
+  protected readonly locationColor = "#f1c40f";
 
   constructor() {
     super("HubScene");
@@ -13,248 +19,282 @@ export class HubScene extends BaseGameScene {
 
   create(): void {
     super.create();
+    this.setWorldSize(GAME_WIDTH, GAME_HEIGHT);
 
-    this.drawHub();
-    this.createPlayer(GAME_WIDTH / 2, GAME_HEIGHT - 100, false);
-    this.setupHubInteractables();
+    this.drawGround();
+    this.buildTavern();
+    this.buildTempleNylea(130, 178);
+    this.buildTempleHeliod(670, 178);
+    this.buildVillage();
+    this.buildExits();
 
-    this.locationText = this.add.text(GAME_WIDTH / 2, 30, UI_STRINGS.hub_name, {
-      fontSize: "24px",
-      color: "#f1c40f",
-      fontStyle: "bold",
-    });
-    this.locationText.setOrigin(0.5);
-    this.locationText.setDepth(100);
+    const spawn = this.getSpawn();
+    this.createPlayer(spawn.x, spawn.y);
+    this.finishSetup();
 
-    this.showMessage("Bem-vindo a Setessa! Pressione E para interagir.");
+    if (this.spawnPoint === "default") {
+      this.time.delayedCall(600, () =>
+        this.showMessage("Bem-vindo a Setessa. Aproxime-se dos templos e pressione E.", 4000)
+      );
+    }
   }
 
-  private drawHub(): void {
-    if (assetTracker.hasTavernAssets()) {
-      this.drawCraftPixHub();
+  private getSpawn(): { x: number; y: number } {
+    switch (this.spawnPoint) {
+      case "wilds":
+        return { x: 80, y: 500 };
+      case "dungeon":
+        return { x: 720, y: 500 };
+      default:
+        return { x: 400, y: 420 };
+    }
+  }
+
+  // ------------------------------------------------------------------ chão
+
+  private drawGround(): void {
+    const cols = GAME_WIDTH / 16;
+    const rows = GAME_HEIGHT / 16;
+    const tc = new TileCanvas(this, GAME_WIDTH, GAME_HEIGHT, DEPTH.ground);
+
+    if (assetTracker.isLoaded("street_tiles")) {
+      const S = TILES.street;
+      tc.fill("street_tiles", 0, 0, cols, rows, () => {
+        const r = S.cobbleRows[Phaser.Math.Between(0, S.cobbleRows.length - 1)];
+        const c = S.cobbleCols[Phaser.Math.Between(0, S.cobbleCols.length - 1)];
+        return r * S.cols + c;
+      });
+
+      // praça de pedra clara sob o templo de Heliod
+      tc.fill("street_tiles", 37, 6, 10, 8, () => S.paleVariants[Phaser.Math.Between(0, S.paleVariants.length - 1)]);
+
+      // folhas caídas espalhadas
+      for (let i = 0; i < 60; i++) {
+        const f = S.leaves[Phaser.Math.Between(0, S.leaves.length - 1)];
+        tc.draw("street_tiles", f, Phaser.Math.Between(0, cols - 1), Phaser.Math.Between(12, rows - 1), 0.85);
+      }
     } else {
-      this.drawPlaceholderHub();
-    }
-  }
-
-  private drawCraftPixHub(): void {
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x6b5344);
-
-    if (assetTracker.isLoaded("tavern_exterior")) {
-      for (let x = 0; x < GAME_WIDTH; x += 16) {
-        for (let y = 0; y < GAME_HEIGHT; y += 16) {
-          const frame = Phaser.Math.Between(0, 7);
-          const tile = this.add.image(x + 8, y + 8, "tavern_exterior", frame);
-          tile.setDepth(0);
-        }
+      tc.solid(COLORS.cobble, 0, 0, cols, rows);
+      for (let i = 0; i < 300; i++) {
+        tc.solid(Math.random() > 0.5 ? 0xa0805f : 0xb8957a, Phaser.Math.Between(0, cols - 1), Phaser.Math.Between(0, rows - 1), 1, 1, 0.6);
       }
     }
 
-    if (assetTracker.isLoaded("tavern_walls_street")) {
-      for (let x = 50; x < GAME_WIDTH - 50; x += 80) {
-        const wallSection = this.add.image(x, 200, "tavern_walls_street", Phaser.Math.Between(0, 5));
-        wallSection.setDepth(1);
-        wallSection.setScale(2);
-      }
-    }
-
-    this.drawTemple(150, 150, "nylea", GODS.nylea.color);
-    this.drawTemple(GAME_WIDTH - 150, 150, "heliod", GODS.heliod.color);
-
-    this.drawTavern();
-
-    if (assetTracker.isLoaded("tree1") || assetTracker.isLoaded("bush1")) {
-      this.addDecorations();
+    // jardim sob o templo de Nylea (tiles da floresta)
+    if (assetTracker.isLoaded("forest_ground")) {
+      const F = TILES.forest;
+      tc.blob("forest_ground", [F.tuftTL, F.tuftT, F.tuftTR, F.tuftL, F.tuftC, F.tuftR, F.tuftBL, F.tuftB, F.tuftBR], 3, 6, 10, 8);
     } else {
-      for (let i = 0; i < 10; i++) {
-        const x = Phaser.Math.Between(50, GAME_WIDTH - 50);
-        const y = Phaser.Math.Between(250, GAME_HEIGHT - 150);
-        this.add.rectangle(x, y, 20, 28, COLORS.tree).setDepth(0);
-      }
+      tc.solid(COLORS.grass, 3, 6, 10, 8);
     }
   }
 
-  private drawPlaceholderHub(): void {
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.hub);
+  // ------------------------------------------------------------------ taverna
 
-    for (let i = 0; i < 15; i++) {
-      const x = Phaser.Math.Between(50, GAME_WIDTH - 50);
-      const y = Phaser.Math.Between(50, GAME_HEIGHT - 150);
-      this.add.rectangle(x, y, 24, 32, COLORS.tree).setDepth(0);
-    }
+  private buildTavern(): void {
+    const x = 400;
+    const y = 190;
+    const hasArt = assetTracker.isLoaded("tavern_exterior");
 
-    this.add.rectangle(150, 150, 64, 48, COLORS.temple);
-    this.add.text(150, 115, "Templo de", { fontSize: "10px", color: "#fff" }).setOrigin(0.5);
-    this.add.text(150, 125, "Nylea", { fontSize: "12px", color: GODS.nylea.colorHex }).setOrigin(0.5);
+    if (hasArt) {
+      this.placeObject("tavern_exterior", "tavern_big", x, y, { block: { w: 176, h: 104 } });
+      this.addGlow(x - 60, y - 60, 22, 0xffb347, 0.18);
+      this.addGlow(x + 42, y - 60, 22, 0xffb347, 0.18);
 
-    this.add.rectangle(GAME_WIDTH - 150, 150, 64, 48, COLORS.temple);
-    this.add.text(GAME_WIDTH - 150, 115, "Templo de", { fontSize: "10px", color: "#fff" }).setOrigin(0.5);
-    this.add.text(GAME_WIDTH - 150, 125, "Heliod", { fontSize: "12px", color: GODS.heliod.colorHex }).setOrigin(0.5);
+      this.placeObject("tavern_exterior", "table_food", 262, 252, { block: { w: 40, h: 16 } });
+      this.placeObject("tavern_exterior", "table_round", 560, 252, { block: { w: 30, h: 16 } });
+      this.placeObject("tavern_exterior", "barrel", 500, 190, { block: { w: 24, h: 12 } });
+      this.placeObject("tavern_exterior", "crate", 318, 190, { block: { w: 26, h: 14 } });
 
-    this.add.rectangle(GAME_WIDTH / 2, 80, 80, 60, 0x4a3728);
-    this.add.text(GAME_WIDTH / 2, 60, "Taverna", { fontSize: "12px", color: "#fff" }).setOrigin(0.5);
-  }
-
-  private drawTemple(x: number, y: number, godId: string, color: number): void {
-    const god = GODS[godId];
-
-    if (assetTracker.isLoaded("tavern_exterior")) {
-      const base = this.add.rectangle(x, y, 72, 56, 0x8b7355);
-      base.setDepth(1);
-
-      const roof = this.add.triangle(x, y - 40, 0, 30, 40, -20, 80, 30, color);
-      roof.setDepth(2);
-
-      const pillarLeft = this.add.rectangle(x - 25, y + 10, 8, 40, 0xd4c4a8);
-      pillarLeft.setDepth(2);
-      const pillarRight = this.add.rectangle(x + 25, y + 10, 8, 40, 0xd4c4a8);
-      pillarRight.setDepth(2);
-
-      const altar = this.add.rectangle(x, y + 5, 20, 20, color);
-      altar.setDepth(2);
+      this.placeAnimated("npc_host", "npc_host_anim", 436, 200);
+      this.placeAnimated("npc_lute", "npc_lute_anim", 606, 254);
     } else {
-      this.add.rectangle(x, y, 64, 48, COLORS.temple);
+      this.placeObject("px", undefined, x, y, { scale: 12, tint: 0x5d4037, block: { w: 96, h: 60 } });
+      this.add.text(x, y - 100, "Taverna", { fontSize: "12px", color: "#fff" }).setOrigin(0.5).setDepth(DEPTH.overlay - 2);
     }
 
-    this.add.text(x, y - 55, "Templo de", { fontSize: "10px", color: "#fff" }).setOrigin(0.5).setDepth(10);
-    this.add.text(x, y - 43, god.name, { fontSize: "12px", color: god.colorHex }).setOrigin(0.5).setDepth(10);
+    this.addInteractable(x, y + 6, "tavern", "Entrar na taverna", undefined, 44);
   }
 
-  private drawTavern(): void {
-    const tavernX = GAME_WIDTH / 2;
-    const tavernY = 85;
+  // ------------------------------------------------------------------ templos
 
-    if (assetTracker.isLoaded("tavern_exterior") || assetTracker.isLoaded("tavern_interior1")) {
-      const building = this.add.rectangle(tavernX, tavernY, 100, 70, 0x5d4037);
-      building.setDepth(1);
-      building.setStrokeStyle(2, 0x3e2723);
+  private buildTempleNylea(x: number, y: number): void {
+    const god = GODS.nylea;
+    const hasForest = assetTracker.isLoaded("tree9");
 
-      const roof = this.add.rectangle(tavernX, tavernY - 40, 110, 16, 0x8d6e63);
-      roof.setDepth(2);
-
-      if (assetTracker.isLoaded("tavern_door")) {
-        const door = this.add.image(tavernX, tavernY + 20, "tavern_door");
-        door.setDepth(2);
-        door.setScale(1.5);
-      } else {
-        const door = this.add.rectangle(tavernX, tavernY + 20, 20, 30, 0x3e2723);
-        door.setDepth(2);
-      }
-
-      const windowLeft = this.add.rectangle(tavernX - 30, tavernY - 5, 16, 16, 0xffeb3b, 0.6);
-      windowLeft.setDepth(2);
-      const windowRight = this.add.rectangle(tavernX + 30, tavernY - 5, 16, 16, 0xffeb3b, 0.6);
-      windowRight.setDepth(2);
-
-      const sign = this.add.rectangle(tavernX + 55, tavernY - 20, 30, 20, 0x4e342e);
-      sign.setDepth(2);
+    if (assetTracker.isLoaded("ruin_orange3")) {
+      this.placeObject("ruin_orange3", undefined, x, y + 14, { block: { w: 36, h: 22 } });
     } else {
-      this.add.rectangle(tavernX, tavernY, 80, 60, 0x4a3728);
+      this.placeObject("px", undefined, x, y + 14, { scale: 5, tint: 0x8b7355, block: { w: 36, h: 22 } });
     }
 
-    this.add.text(tavernX, tavernY - 55, "Taverna", { fontSize: "12px", color: "#fff" }).setOrigin(0.5).setDepth(10);
+    if (hasForest) {
+      this.placeObject("tree9", undefined, x - 62, y - 10, { block: { w: 18, h: 12 } });
+      this.placeObject("tree12", undefined, x + 62, y - 6, { block: { w: 18, h: 12 } });
+      this.placeObject("bush12", undefined, x - 40, y + 40, {});
+      this.placeObject("bush2", undefined, x + 44, y + 42, {});
+      this.placeObject("mushroom1", undefined, x - 20, y + 48, {});
+    }
+
+    this.placeTorch(x - 34, y + 30, 0x7dffb3);
+    this.placeTorch(x + 34, y + 30, 0x7dffb3);
+    this.addGlow(x, y, 46, god.color, 0.16);
+
+    this.add
+      .text(x, y - 78, "Templo de Nylea", { fontSize: "12px", color: god.colorHex, stroke: "#000", strokeThickness: 3 })
+      .setOrigin(0.5)
+      .setDepth(DEPTH.overlay - 2);
+
+    this.addInteractable(x, y + 10, "temple", "Altar de Nylea", { godId: "nylea" }, 50);
   }
 
-  private addDecorations(): void {
-    const treeKeys = ["tree1", "tree2", "tree3"].filter(k => assetTracker.isLoaded(k));
-    const bushKeys = ["bush1", "bush2"].filter(k => assetTracker.isLoaded(k));
+  private buildTempleHeliod(x: number, y: number): void {
+    const god = GODS.heliod;
+    const hasDungeon = assetTracker.isLoaded("dungeon_objects");
 
-    const treePositions = [
-      { x: 40, y: 300 }, { x: 760, y: 320 },
-      { x: 60, y: 450 }, { x: 740, y: 470 },
-      { x: 200, y: 280 }, { x: 600, y: 290 },
-    ];
+    if (assetTracker.isLoaded("dungeon_tiles")) {
+      const tc = new TileCanvas(this, GAME_WIDTH, GAME_HEIGHT, DEPTH.groundDecor);
+      const slab = TILES.dungeon.slab;
+      const c0 = Math.round(x / 16) - 1;
+      const r0 = Math.round(y / 16) - 2;
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) tc.draw("dungeon_tiles", slab[r][c], c0 + c, r0 + r);
+    }
 
-    for (const pos of treePositions) {
-      if (treeKeys.length > 0) {
-        const key = treeKeys[Phaser.Math.Between(0, treeKeys.length - 1)];
-        const tree = this.add.image(pos.x, pos.y, key);
-        tree.setDepth(1);
-        tree.setScale(0.7 + Math.random() * 0.3);
-      } else {
-        this.add.rectangle(pos.x, pos.y, 20, 28, COLORS.tree).setDepth(1);
+    if (hasDungeon) {
+      this.placeObject("dungeon_objects", "statue_a", x, y + 8, { block: { w: 20, h: 14 } });
+      if (assetTracker.isLoaded("dungeon_arches")) {
+        this.placeObject("dungeon_arches", "pillar", x - 56, y + 12, { block: { w: 18, h: 12 } });
+        this.placeObject("dungeon_arches", "pillar", x + 56, y + 12, { block: { w: 18, h: 12 } });
       }
+    } else {
+      this.placeObject("px", undefined, x, y + 8, { scale: 4, tint: 0xd4c4a8, block: { w: 20, h: 14 } });
     }
 
-    for (let i = 0; i < 8; i++) {
-      const x = Phaser.Math.Between(80, GAME_WIDTH - 80);
-      const y = Phaser.Math.Between(220, GAME_HEIGHT - 130);
-      if (bushKeys.length > 0) {
-        const key = bushKeys[Phaser.Math.Between(0, bushKeys.length - 1)];
-        const bush = this.add.image(x, y, key);
-        bush.setDepth(0);
-        bush.setScale(0.5 + Math.random() * 0.3);
-      }
-    }
+    this.placeTorch(x - 30, y + 34, 0xffd166);
+    this.placeTorch(x + 30, y + 34, 0xffd166);
+    this.addGlow(x, y - 10, 50, god.color, 0.2);
+
+    this.add
+      .text(x, y - 78, "Templo de Heliod", { fontSize: "12px", color: god.colorHex, stroke: "#000", strokeThickness: 3 })
+      .setOrigin(0.5)
+      .setDepth(DEPTH.overlay - 2);
+
+    this.addInteractable(x, y + 10, "temple", "Altar de Heliod", { godId: "heliod" }, 50);
   }
 
-  private setupHubInteractables(): void {
-    this.addInteractable(150, 150, GODS.nylea.color, "temple_nylea", 32, { godId: "nylea" });
-    this.addInteractable(GAME_WIDTH - 150, 150, GODS.heliod.color, "temple_heliod", 32, { godId: "heliod" });
-
-    this.addPortal(100, GAME_HEIGHT - 50, "WildsScene", { spawnPoint: "hub" });
-    this.add.text(100, GAME_HEIGHT - 30, "Floresta", { fontSize: "10px", color: "#fff" }).setOrigin(0.5);
-
-    this.addPortal(GAME_WIDTH - 100, GAME_HEIGHT - 50, "DungeonScene", { spawnPoint: "hub" });
-    this.add.text(GAME_WIDTH - 100, GAME_HEIGHT - 30, "Ruínas", { fontSize: "10px", color: "#fff" }).setOrigin(0.5);
-
-    this.addInteractable(GAME_WIDTH / 2, 85, 0x8b6914, "tavern", 50);
-  }
-
-  protected handleInteraction(type: string, data?: any): void {
-    if (type === "temple_nylea" || type === "temple_heliod") {
-      this.showOfferingDialog(data.godId);
-    } else if (type === "portal" && data?.targetScene) {
-      this.goToScene(data.targetScene, data);
-    } else if (type === "tavern") {
-      this.showMessage("A taverna está vazia... por enquanto.");
+  /** Tocha animada com tint (variante 1 = tocha de parede 32x48) */
+  private placeTorch(x: number, y: number, tint: number): void {
+    const s = this.placeAnimated("dungeon_torches", "torch1", x, y, { tint });
+    if (s) {
+      this.addGlow(x, y - 26, 20, tint, 0.28);
+    } else {
+      const f = this.add.circle(x, y - 10, 4, tint).setDepth(DEPTH.ySortBase + y);
+      this.tweens.add({ targets: f, scale: 1.3, alpha: 0.7, yoyo: true, repeat: -1, duration: 300 });
     }
   }
 
-  private showOfferingDialog(godId: string): void {
-    const god = GODS[godId];
+  // ------------------------------------------------------------------ vila
 
-    this.game.events.emit("show-dialog", {
-      speaker: god.name,
-      text: god.greeting,
+  private buildVillage(): void {
+    if (!assetTracker.isLoaded("tavern_exterior")) return;
+
+    this.placeObject("tavern_exterior", "house_small_a", 70, 350, { block: { w: 56, h: 26 } });
+    this.placeObject("tavern_exterior", "house_right", 715, 380, { block: { w: 130, h: 50 } });
+    this.placeObject("tavern_exterior", "stall", 208, 348, { block: { w: 34, h: 18 } });
+    this.placeObject("tavern_exterior", "crate", 246, 346, { block: { w: 26, h: 12 } });
+    this.placeObject("tavern_exterior", "barrel", 278, 342, { block: { w: 22, h: 12 } });
+
+    // cerca inferior com aberturas para os portais
+    for (let x = 156; x <= 640; x += 64) {
+      this.placeObject("tavern_exterior", "fence_h2", x + 32, 548, { block: { w: 64, h: 8 } });
+    }
+
+    // guarda perto das ruínas
+    this.placeAnimated("npc_watcher", "npc_watcher_anim", 662, 545);
+
+    if (assetTracker.isLoaded("bush1")) {
+      this.placeObject("bush1", undefined, 40, 456, {});
+      this.placeObject("bush11", undefined, 760, 470, {});
+    }
+  }
+
+  // ------------------------------------------------------------------ saídas
+
+  private buildExits(): void {
+    // Floresta (esq. inferior): borda de árvores
+    if (assetTracker.isLoaded("tree1")) {
+      this.placeObject("tree12", undefined, 146, 606, { block: { w: 18, h: 12 } });
+      this.placeObject("tree9", undefined, 22, 612, { block: { w: 18, h: 12 } });
+      this.placeObject("bush3", undefined, 26, 520, {});
+    }
+    this.addPortal(80, 556, "WildsScene", "Floresta Selvagem", "hub", 0x2ecc71);
+
+    // Ruínas (dir. inferior): arco de pedra
+    if (assetTracker.isLoaded("dungeon_arches")) {
+      this.placeObject("dungeon_arches", "arch_dark", 720, 600, { scale: 2, depth: DEPTH.ySortBase + 600 });
+      this.addBlocker(690, 580, 12, 40);
+      this.addBlocker(750, 580, 12, 40);
+      this.addBlocker(720, 598, 60, 6);
+      this.addGlow(720, 570, 26, 0x9b59b6, 0.16);
+    }
+    this.addPortal(720, 556, "DungeonScene", "Ruínas Antigas", "hub", 0x9b59b6);
+  }
+
+  // ------------------------------------------------------------------ interação
+
+  protected handleInteraction(it: Interactable): void {
+    if (it.type === "temple") {
+      const god = GODS[it.data.godId];
+      this.showOfferingDialog(it.data.godId, `Templo de ${god.name}`, god.greeting);
+    } else if (it.type === "tavern") {
+      this.showTavernDialog();
+    }
+  }
+
+  private showTavernDialog(): void {
+    const hpMissing = this.player.maxHp - this.player.hp;
+    this.showDialog({
+      speaker: "Taverneiro",
+      text:
+        hpMissing > 0
+          ? `Você parece cansado da estrada, herói. Um descanso cura suas feridas (${Math.round(this.player.hp)}/${this.player.maxHp}).`
+          : "Bem-vindo! A caneca está cheia e as histórias também.",
       options: [
         {
-          text: `Fazer oferenda (+15 Devoção)`,
+          text: "Descansar (recupera toda a vida)",
           callback: () => {
-            this.devotionSystem.addDevotion(godId, 15);
-            this.showMessage(`Sua devoção a ${god.name} aumentou!`);
-            this.game.events.emit("hide-dialog");
-
-            if (this.devotionSystem.isJealousyPending()) {
-              this.time.delayedCall(1500, () => {
-                this.devotionSystem.triggerJealousyEvent();
+            if (hpMissing > 0) {
+              this.cameras.main.fadeOut(300, 0, 0, 0);
+              this.time.delayedCall(320, () => {
+                this.combat.heal(this.player, this.player.maxHp);
+                this.cameras.main.fadeIn(400, 0, 0, 0);
+                this.showMessage("Você descansou. Vida restaurada!");
+                this.persist();
               });
+            } else {
+              this.showMessage("Você já está com a vida cheia.");
             }
           },
         },
         {
-          text: "Apenas rezar",
+          text: "Ouvir rumores",
           callback: () => {
-            this.showMessage(god.greeting);
-            this.game.events.emit("hide-dialog");
+            const tips = [
+              "Nylea recompensa quem caça na floresta; Heliod, quem purifica as ruínas.",
+              "Com 25 de Devoção o deus concede uma bênção. Com 50, outra.",
+              "Dizem que os deuses são ciumentos: subir demais com um enquanto o outro está alto... irrita.",
+              "Se cair em combate, Erebos oferece uma barganha. Ela nunca é de graça.",
+              "A esquiva (Shift) te deixa invulnerável por um instante. Use quando vir o '!' vermelho.",
+            ];
+            this.showDialog({
+              speaker: "Taverneiro",
+              text: tips[Phaser.Math.Between(0, tips.length - 1)],
+              options: [{ text: "Entendi", callback: () => {} }],
+            });
           },
         },
-        {
-          text: "Sair",
-          callback: () => {
-            this.game.events.emit("hide-dialog");
-          },
-        },
+        { text: "Sair", callback: () => {} },
       ],
-    });
-  }
-
-  private goToScene(targetScene: string, data: any): void {
-    this.scene.start(targetScene, {
-      devotionSystem: this.devotionSystem,
-      bestowSystem: this.bestowSystem,
-      playerHp: this.player.hp,
-      ...data,
     });
   }
 }
