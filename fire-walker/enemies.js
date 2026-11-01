@@ -157,8 +157,22 @@ function emberBurst(x, y, n, power) {
 // ---------------------------------------------------------------------------
 // The hero gets hit
 // ---------------------------------------------------------------------------
-function playerHit(dir, dmg, kb = 1) {
+// src: the enemy that attacked (for blocks and perfect-block staggers).
+// unblockable: hits from below or above (shockwaves, slams, meteors).
+function playerHit(dir, dmg, kb = 1, src = null, unblockable = false) {
   if (ch.dead || dissolve.state !== 'none' || ch.hurt > 0 || ch.invuln > 0) return;
+  if (rollInvulnerable()) { sfx('dodge', { x: ch.x }); return; } // rolled through it
+  if (!unblockable) {
+    const through = shieldResolve(dir, dmg, kb, src);
+    if (through !== null) {
+      if (through > 0) {
+        ch.hp = Math.max(0, ch.hp - through);
+        ch.lastHit = simTime;
+        if (ch.hp <= 0) heroDies();
+      }
+      return;
+    }
+  }
   ch.hp = Math.max(0, ch.hp - dmg);
   ch.lastHit = simTime;
   ch.hurt = 0.35;
@@ -308,7 +322,7 @@ function updateWalker(e, dt) {
         e.t = 0;
         if (def.melee && def.melee.slam) slam(e);
         else if (def.melee) {
-          if (heroThere && dist < def.melee.reach * e.scale && ch.y > FEET_Y - 16) playerHit(e.facing, def.melee.dmg, 1);
+          if (heroThere && dist < def.melee.reach * e.scale && ch.y > FEET_Y - 16) playerHit(e.facing, def.melee.dmg, 1, e);
         } else castShadowOrb(e);
       }
     } else if (e.state === 'strike' && e.t > (def.melee && def.melee.slam ? 0.45 : 0.25)) {
@@ -387,7 +401,7 @@ function updateBat(e, dt) {
     ty = e.diveY;
     spd *= 2.4;
     if (heroTargetable() && Math.abs(e.x - cx) < 7 && Math.abs(e.y - cy) < 9) {
-      playerHit(Math.sign(cx - e.x) || 1, def.dmg, 0.6);
+      playerHit(Math.sign(cx - e.x) || 1, def.dmg, 0.6, e);
       e.state = 'climb'; e.t = 0;
     }
     if (Math.hypot(e.x - tx, e.y - ty) < 4 || e.t > 1.2) { e.state = 'climb'; e.t = 0; }
@@ -433,7 +447,7 @@ function slam(e) {
   sfx('slam', { x });
   shake = Math.max(shake, 3.5);
   emberBurst(x, GROUND - 2, 14, 0.5);
-  if (heroTargetable() && Math.abs(ch.x - x) < 12 && ch.y > FEET_Y - 6) playerHit(Math.sign(ch.x - e.x) || e.facing, e.def.melee.dmg, 1.2);
+  if (heroTargetable() && Math.abs(ch.x - x) < 12 && ch.y > FEET_Y - 6) playerHit(Math.sign(ch.x - e.x) || e.facing, e.def.melee.dmg, 1.2, e, true);
 }
 
 const SHOCK_SPEED = 130;
@@ -446,7 +460,7 @@ function updateShockwaves(dt) {
     // Jump over it: only hits a hero standing on the ground.
     if (!s.hit && heroTargetable() && ch.y > FEET_Y - 4) {
       for (const front of [s.x - r, s.x + r]) {
-        if (Math.abs(ch.x - front) < 5) { playerHit(Math.sign(ch.x - s.x) || 1, s.dmg, 1.1); s.hit = true; break; }
+        if (Math.abs(ch.x - front) < 5) { playerHit(Math.sign(ch.x - s.x) || 1, s.dmg, 1.1, null, true); s.hit = true; break; }
       }
     }
   }
@@ -460,12 +474,14 @@ function updateShots(dt) {
     s.x += s.vx * dt;
     s.y += (s.ty - s.y) * Math.min(1, dt * 6) + Math.sin(s.age * 14) * 0.15;
     // Crouch under it or jump over it.
-    if (heroTargetable() && Math.abs(s.x - ch.x) < 4 + s.r && s.y > heroTop && s.y < ch.y) {
+    if (heroTargetable() && shieldStopsOrb(s)) s.dead = true;
+    else if (heroTargetable() && Math.abs(s.x - ch.x) < 4 + s.r && s.y > heroTop && s.y < ch.y && !rollInvulnerable()) {
       playerHit(Math.sign(s.vx), s.dmg, 0.8);
       s.dead = true;
     }
-    // The hero's spell destroys it in the air.
-    for (const b of bolts) {
+    // The hero's spell destroys it in the air (an orb the shield already stopped is gone:
+    // a reflected fireball starts right on top of it and must not collide with it).
+    if (!s.dead) for (const b of bolts) {
       if (!b.dead && Math.abs(b.x - s.x) < b.r + s.r && Math.abs(b.y - s.y) < b.r + s.r + 1) { impact(b, false); s.dead = true; }
     }
     if (s.x < 0 || s.x >= W || s.age > 4) s.dead = true;
