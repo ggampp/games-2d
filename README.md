@@ -7,6 +7,7 @@ Cada pasta é um projeto independente. Instale e rode **dentro** dela.
 | Pasta | Loop | Stack | Como rodar |
 |---|---|---|---|
 | [`futebol-de-botao/`](./futebol-de-botao) | Futebol de botão · solo ou 2 jogadores locais | Canvas 2D | `npm install && npm run dev` |
+| [`guti/`](./guti) | Tabuleiro de captura por saltos (tomates × karelas) · campanha de 13 fases, 6 mapas, vs CPU ou 2 jogadores | SVG + Web Worker | `npm install && npm run dev` |
 | [`td-cats-dogs/`](./td-cats-dogs) | Tower defense | Phaser 3 | `npm install && npm run dev` |
 | [`LongSpectrum/`](./LongSpectrum) | Puzzle de ótica | Canvas 2D | servir a pasta |
 | [`glint/`](./glint) | Action RPG HD-2D | Three.js | `npm install && npm run dev` |
