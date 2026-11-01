@@ -183,14 +183,14 @@ Em **Som** liga e desliga tudo; **Música** e **Efeitos** ajustam os volumes.
 
 Aperte `J` (ou `X`, ou o botão **Espada**) para atacar corpo a corpo. Apertar de novo durante um golpe já guarda o próximo, até três:
 
-| Golpe | Movimento | Efeito |
-|---|---|---|
-| 1 | Corte diagonal de cima para baixo | 22 de dano, empurra pouco para manter o alvo ao alcance |
-| 2 | Corte ascendente de volta | 22 de dano |
-| 3 | Corte horizontal pesado com avanço | 38 de dano, faz o alvo cambalear (inclusive o Guardião) e o deixa em chamas |
-| No ar | Corte descendente | 28 de dano e fogo |
+| Golpe | Preparação (cotovelo dobrado) | Golpe (braço estende) | Efeito |
+|---|---|---|---|
+| 1 | No primeiro golpe, a mão sobe até o cabo e **saca** a espada; ela fica armada atrás da cabeça | Passa por cima e desce na diagonal para a frente | 22 de dano, empurra pouco para manter o alvo ao alcance |
+| 2 | Punho recolhido junto ao quadril, lâmina baixa | Sobe para a frente | 22 de dano |
+| 3 | Cotovelo bem para trás, lâmina na altura do peito | **Estocada** com avanço do corpo | 38 de dano, faz o alvo cambalear (inclusive o Guardião) e o deixa em chamas |
+| No ar | Lâmina armada sobre a cabeça | Corte descendente | 28 de dano e fogo |
 
-Cada golpe tem preparação, movimento e recuperação. São duas poses de braço (preparação e acompanhamento) misturadas à pose procedural, com a mesma convenção de ângulos da magia, e o corpo inclina e as pernas se firmam. Durante o movimento, o antebraço, a mão e a lâmina, além do arco que a ponta percorreu desde o quadro anterior, são testados contra os inimigos, o boneco e os orbes do cultista. A espada **rebate os orbes** se o golpe chegar a tempo, uns 0,25–0,45 s antes do impacto. Cada acerto tem congelamento, faíscas e tremor, e o inimigo sente o golpe como com a magia. A ponta deixa um **arco de fogo** do mesmo algoritmo, com um traço brilhante por cima.
+Cada golpe tem preparação (0,12 s, mais 0,12 s de saque quando a espada está guardada), golpe (0,12 s) e recuperação (0,2 s), escalados pela velocidade da lâmina. A preparação dobra o cotovelo sempre no sentido natural (antebraço girado para a frente ou para cima em relação ao braço). No golpe, o **cotovelo conduz**: o braço se move rápido no começo, enquanto o antebraço vem atrasado e **chicoteia** no fim, até o braço ficar estendido no impacto. Essas poses se misturam à pose procedural, e o tronco inclina e as pernas se firmam. Durante o golpe, o antebraço, a mão e a lâmina, além do arco que a ponta percorreu desde o quadro anterior, são testados contra os inimigos, o boneco e os orbes do cultista. A espada **rebate os orbes** se o golpe chegar a tempo. Cada acerto tem congelamento, faíscas e tremor, e o inimigo sente o golpe como com a magia. A ponta deixa um **arco de fogo** do mesmo algoritmo, com um traço brilhante por cima.
 
 Cada personagem tem sua lâmina:
 

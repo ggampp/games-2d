@@ -1,7 +1,8 @@
 // Fire Walker — sword attack.
 //
 // A three-hit combo (any press during a swing queues the next hit) plus a downward slash in the air.
-// Each swing is two arm poses — wind-up and follow-through — blended into the
+// The first swing draws the sword. Each swing bends the elbow to cock the blade back
+// (wind-up), then extends the arm into the hit (follow-through), blended into the
 // procedural pose (same convention as the cast poses: angles from straight down,
 // positive toward where the hero faces). During the active part of the swing the
 // blade is swept against enemies; its tip leaves an arc of DOOM fire.
@@ -18,34 +19,47 @@ const WEAPONS = {
 const weapon = () => WEAPONS[cfg.hero];
 
 // [front arm (sword), back arm] for the wind-up and the follow-through.
+// The wind-up always bends the elbow the natural way (forearm rotated forward/up
+// relative to the upper arm, fa > ua), cocking the blade back; the follow-through
+// extends the arm into the hit.
 const SWINGS = [
-  // 1: diagonal cut from overhead down to the front.
-  { wind: { ua: [2.8, 0.6], fa: [3.3, 0.9], lean: -0.1 }, act: { ua: [0.9, -0.4], fa: [0.7, -0.2], lean: 0.35 }, dmg: 22, power: 0.35, lunge: 30, burn: 0 },
-  // 2: rising backhand.
-  { wind: { ua: [0.2, 1.0], fa: [-0.4, 1.4], lean: 0.2 }, act: { ua: [2.3, -0.3], fa: [2.7, -0.1], lean: -0.05 }, dmg: 22, power: 0.35, lunge: 30, burn: 0 },
-  // 3: heavy horizontal slash with a lunge; staggers and sets the target on fire.
-  { wind: { ua: [-1.3, 0.9], fa: [-1.5, 1.2], lean: -0.15 }, act: { ua: [1.6, -0.6], fa: [1.6, -0.4], lean: 0.45 }, dmg: 38, power: 0.8, lunge: 85, burn: 1.6 },
+  // 1: diagonal cut. Elbow up, blade cocked behind the head -> arm extends forward-down.
+  { wind: { ua: [2.4, 0.9], fa: [4.4, 1.5], lean: -0.12 }, act: { ua: [0.9, -0.4], fa: [0.95, -0.1], lean: 0.35 }, dmg: 22, power: 0.35, lunge: 30, burn: 0 },
+  // 2: rising cut. Elbow back, fist at the hip, blade low -> arm extends up and forward.
+  { wind: { ua: [-0.5, 0.8], fa: [0.9, 1.4], lean: 0.18 }, act: { ua: [2.0, -0.3], fa: [2.35, 0.0], lean: -0.05 }, dmg: 22, power: 0.35, lunge: 30, burn: 0 },
+  // 3: lunging thrust. Elbow pulled far back, blade level at the chest -> arm shoots forward.
+  //    Staggers (even the boss) and sets the target on fire.
+  { wind: { ua: [-0.8, 1.2], fa: [1.4, 1.8], lean: -0.15 }, act: { ua: [1.5, -0.7], fa: [1.55, -0.4], lean: 0.45 }, dmg: 38, power: 0.8, lunge: 85, burn: 1.6 },
 ];
-// In the air: a plunging slash.
-const AIR_SWING = { wind: { ua: [3.0, 2.2], fa: [3.4, 2.6], lean: -0.1 }, act: { ua: [0.6, 1.6], fa: [0.3, 1.9], lean: 0.4 }, dmg: 28, power: 0.5, lunge: 0, burn: 1 };
+// In the air: blade cocked overhead, then a plunging cut down in front.
+const AIR_SWING = { wind: { ua: [2.5, 2.0], fa: [4.3, 2.6], lean: -0.1 }, act: { ua: [0.6, 1.4], fa: [0.65, 1.9], lean: 0.4 }, dmg: 28, power: 0.5, lunge: 0, burn: 1 };
+// Drawing the sword: the hand reaches over the shoulder to the hilt.
+const DRAW_POSE = { ua: [2.9, 0.7], fa: [4.0, 1.2], lean: -0.05 };
 
-const SWING_WIND = 0.08;
-const SWING_ACT = 0.12;
-const SWING_REC = 0.2;
+const SWING_WIND = 0.12;  // wind-up (bend the arm, cock the blade)
+const SWING_DRAW = 0.12;  // extra on the first swing when the sword is still sheathed
+const SWING_ACT = 0.12;   // the hit (extend the arm)
+const SWING_REC = 0.2;    // recovery (combo window)
 
-const melee = { state: 'idle', combo: 0, t: 0, buffer: 0, swing: null, hit: new Set(), trail: [], drawn: 0, prevTip: null, active: false, queued: false };
+const melee = { state: 'idle', combo: 0, t: 0, buffer: 0, swing: null, hit: new Set(), trail: [], drawn: 0, prevTip: null, active: false, queued: false, wind: SWING_WIND, drawAt: 0 };
 
-const swordOut = () => melee.state !== 'idle' || melee.drawn > 0;
+// The sword is in hand once the draw reaches the hilt, and for a moment after the last swing.
+const swordOut = () => (melee.state === 'swing' && melee.t >= melee.drawAt) || melee.drawn > 0;
 
 function canSwing() {
   return !ch.dead && dissolve.state === 'none' && spell.state === 'idle' && ch.hurt <= 0;
 }
 
 function startSwing(combo) {
+  const k = weapon().speed;
+  const drawing = !swordOut();
   melee.state = 'swing';
   melee.combo = combo;
   melee.t = 0;
   melee.swing = ch.onGround ? SWINGS[combo] : AIR_SWING;
+  melee.wind = (SWING_WIND + (drawing ? SWING_DRAW : 0)) * k;
+  melee.drawAt = drawing ? SWING_DRAW * k * 0.8 : 0; // hand reaches the hilt
+  melee.drawing = drawing;
   melee.hit.clear();
   melee.prevTip = null;
   melee.buffer = 0;
@@ -66,13 +80,14 @@ function updateMelee(dt, pressed) {
   }
   if (!canSwing() && melee.state === 'swing' && (ch.hurt > 0 || ch.dead)) { melee.state = 'idle'; return; }
   const k = weapon().speed;
-  const wind = SWING_WIND * k;
+  const wind = melee.wind;
   const act = SWING_ACT * k;
   const rec = SWING_REC * k;
   // Any press during a swing queues the next hit of the combo.
   if (pressed) melee.queued = true;
   const before = melee.t;
   melee.t += dt;
+  if (melee.drawing && before < melee.drawAt && melee.t >= melee.drawAt) sfx('draw', { x: ch.x });
   if (before < wind && melee.t >= wind) {
     // The blade starts moving: whoosh and lunge.
     sfx('swing', { x: ch.x, power: weapon().dmg });
@@ -85,31 +100,41 @@ function updateMelee(dt, pressed) {
     if (chain) startSwing(melee.combo + 1);
     else { melee.state = 'idle'; melee.combo = 0; }
   }
-  melee.drawn = 1.2; // keep the sword in hand for a moment after the last swing
+  if (melee.state === 'swing' && melee.t >= melee.drawAt) melee.drawn = 1.2; // keep it in hand a moment after
 }
+
+const lerpPose = (a, b, u, v = u) => ({
+  ua: a.ua.map((x, i) => lerp(x, b.ua[i], u)),
+  fa: a.fa.map((x, i) => lerp(x, b.fa[i], v)),
+  lean: lerp(a.lean, b.lean, u),
+});
 
 // Pose blend used by computePose (walker.js): null when not swinging.
 function meleeBlend() {
   if (melee.state !== 'swing') return null;
   const k = weapon().speed;
-  const wind = SWING_WIND * k;
+  const wind = melee.wind;
   const act = SWING_ACT * k;
   const rec = SWING_REC * k;
   const S = melee.swing;
   const t = melee.t;
   if (t < wind) {
-    return { k: easeInOut(t / wind), ua: S.wind.ua, fa: S.wind.fa, lean: S.wind.lean };
+    if (melee.drawing) {
+      // Reach back for the hilt, then pull the blade out into the cocked position.
+      const reach = SWING_DRAW * k;
+      if (t < reach) return { k: easeInOut(t / reach), ...DRAW_POSE };
+      return { k: 1, ...lerpPose(DRAW_POSE, S.wind, easeInOut((t - reach) / (wind - reach))) };
+    }
+    return { k: easeInOut(t / wind), ...S.wind };
   }
   if (t < wind + act) {
-    const u = 1 - (1 - (t - wind) / act) ** 2; // ease-out: fast through the hit
-    return {
-      k: 1,
-      ua: S.wind.ua.map((v, i) => lerp(v, S.act.ua[i], u)),
-      fa: S.wind.fa.map((v, i) => lerp(v, S.act.fa[i], u)),
-      lean: lerp(S.wind.lean, S.act.lean, u),
-    };
+    // The elbow leads (upper arm eases out fast), the forearm lags and whips through.
+    const u = (t - wind) / act;
+    const lead = 1 - (1 - u) ** 2;
+    const whip = u * u * (3 - 2 * u);
+    return { k: 1, ...lerpPose(S.wind, S.act, lead, whip) };
   }
-  return { k: 1 - easeInOut(clamp((t - wind - act) / rec, 0, 1)), ua: S.act.ua, fa: S.act.fa, lean: S.act.lean };
+  return { k: 1 - easeInOut(clamp((t - wind - act) / rec, 0, 1)), ...S.act };
 }
 
 // Blade from the front wrist along the forearm.
