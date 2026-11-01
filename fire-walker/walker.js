@@ -235,14 +235,15 @@ let jumpBuffer = 0;
 let landingBurst = 0;
 
 function updateCharacter(dt, input) {
-  const busy = dissolve.state !== 'none' || spell.state !== 'idle' || melee.state !== 'idle' || ch.hurt > 0;
+  const busy = dissolve.state !== 'none' || spell.state !== 'idle' || melee.state !== 'idle' || defense.rolling || ch.hurt > 0;
   const dir = busy ? 0 : input.dir;
   const crouching = !busy && input.crouch && ch.onGround;
   const walk = cfg.walk * heroDef().walk;
-  const target = dir * (input.run ? walk * 2.1 : walk) * (crouching ? 0.4 : 1);
+  const target = dir * (input.run && !defense.block ? walk * 2.1 : walk) * (crouching ? 0.4 : 1) * (defense.block ? 0.35 : 1);
 
   ch.vx = approach(ch.vx, target, (ch.onGround ? 340 : 180) * dt);
-  if (dir !== 0) ch.facing = dir;
+  if (dir !== 0 && !defense.block) ch.facing = dir; // the shield stays toward the threat
+  if (defense.rolling) ch.vx = rollVelocity();
 
   if (input.jump) jumpBuffer = 0.12;
   jumpBuffer -= dt;
@@ -310,7 +311,7 @@ const orbRadius = () => 1.2 + spell.power * 2.6;
 function updateSpell(dt, held) {
   const s = spell;
   if (s.state === 'idle') {
-    if (held && dissolve.state === 'none' && melee.state === 'idle') {
+    if (held && dissolve.state === 'none' && melee.state === 'idle' && !defense.block && !defense.rolling) {
       s.state = 'charge'; s.t = 0; s.power = 0; s.release = false; s.launched = false;
     }
     return;
@@ -461,7 +462,8 @@ function computePose(t) {
   const bob = -Math.cos(2 * ch.phase) * (0.7 + run * 0.8) * a * ground;
   const breathe = Math.sin(t * 2.2) * (1 - a);
   const hipX = ch.x;
-  const hipY = ch.y - LEG * 0.93 + crouch * 6.5 + bob + (cast ? cast.lunge * ck * 2 : 0);
+  const bk = defense.blockK; // shield raised (defense.js)
+  const hipY = ch.y - LEG * 0.93 + crouch * 6.5 + bob + (cast ? cast.lunge * ck * 2 : 0) + bk * 1.5;
 
   const legs = [];
   for (let i = 0; i < 2; i++) {
@@ -469,6 +471,7 @@ function computePose(t) {
     let stand = i === 0 ? 2 : -1.7;
     if (cast) stand = lerp(stand, i === 0 ? 5 : -4.5, cast.lunge * ck); // plant the feet
     if (mb) stand = lerp(stand, i === 0 ? 4 : -3.5, mk * 0.8);
+    if (bk > 0) stand = lerp(stand, i === 0 ? 3.5 : -3, bk * 0.7);
     const off = -Math.cos(ph) * (ch.stride / 2) * a + stand * (1 - a);
     const lift = Math.max(0, Math.sin(ph)) * cfg.step * (1 + run * 0.6) * a;
     let fx = hipX + f * off;
@@ -482,6 +485,7 @@ function computePose(t) {
   let lean = 0.06 + a * 0.1 + run * 0.22 - air * 0.05 + crouch * 0.25;
   if (cast) lean = lerp(lean, cast.lean, ck);
   if (mb) lean = lerp(lean, mb.lean, mk);
+  if (bk > 0) lean = lerp(lean, 0.02, bk);
   const hk = clamp(ch.hurt / 0.3, 0, 1); // recoil when a ghoul hits him
   lean = lerp(lean, -0.35, hk);
   const up = [f * Math.sin(lean), -Math.cos(lean)];  // torso axis
@@ -507,6 +511,7 @@ function computePose(t) {
     fa = lerp(fa, i === 0 ? 2.8 : 2.4, air * 0.85);
     if (cast) { ua = lerp(ua, cast.ua[i], ck); fa = lerp(fa, cast.fa[i], ck); }
     if (mb) { ua = lerp(ua, mb.ua[i], mk); fa = lerp(fa, mb.fa[i], mk); }
+    if (bk > 0 && i === 1) { ua = lerp(ua, 1.2, bk); fa = lerp(fa, 2.6, bk); } // shield arm up in front
     if (hk > 0) { ua = lerp(ua, i === 0 ? -0.5 : -0.8, hk); fa = lerp(fa, i === 0 ? 0.3 : -0.4, hk); }
     const ex = shX + f * Math.sin(ua) * BODY.upperArm;
     const ey = shY + Math.cos(ua) * BODY.upperArm;
@@ -519,6 +524,7 @@ function computePose(t) {
   const hand = [fa0.hx + ((fa0.hx - fa0.ex) / fd) * 2.4, fa0.hy + ((fa0.hy - fa0.ey) / fd) * 2.4];
 
   pose = { f, hipX, hipY, neckX, neckY, headX, headY, legs, arms, up, fw, run, a, breathe, hand };
+  if (defense.rolling) applyRollPose(pose);
   pose.sword = swordGeom(pose);
   return pose;
 }
@@ -972,6 +978,7 @@ function seedSpell() {
   }
   seedHeroWaves();
   seedMelee();
+  seedShield();
   // A burning dummy is its own heat source for a while.
   if (cfg.enemies === 'off' && dummy.burn > 0) {
     const heat = Math.round(18 + 18 * Math.min(1, dummy.burn / 1.5));
@@ -1047,4 +1054,5 @@ function buildFx() {
   }
   heroWaveFx();
   meleeFx();
+  shieldFx();
 }

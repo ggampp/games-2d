@@ -17,6 +17,7 @@ npx serve .        # ou: python3 -m http.server
 | `audio.js` | Áudio procedural (Web Audio API): efeitos sonoros sintetizados e o sequenciador de música |
 | `walker.js` | Núcleo: configuração, paletas, herói (física, pose, desenho do Andarilho), magia, rasterização por id de parte e sombreamento, simulação do fogo |
 | `melee.js` | Ataque com espada: combo de 3 golpes, golpe no ar, acerto ao longo da lâmina, rebate de orbes e arco de fogo |
+| `defense.js` | Escudo (defesa e defesa perfeita) e rolamento (esquiva com invulnerabilidade) |
 | `heroes.js` | Personagens jogáveis: atributos, movimento secundário, desenho da Bruxa e do Paladino, e as magias de cada um |
 | `enemies.js` | Tipos de inimigo, ondas, vida, golpes, queima, projéteis e onda de choque |
 | `boss.js` | O Guardião do Portão: arena, ataques, fúria, meteoros |
@@ -202,6 +203,30 @@ Cada personagem tem sua lâmina:
 
 A espada fica na mão por um instante depois do último golpe. Golpe e magia não se misturam: um espera o outro terminar. O piloto automático usa a espada contra carniçais, cultistas e morcegos que chegam perto, e a magia contra os grandes.
 
+### 13. Escudo e rolamento
+
+**Escudo**: segure `L` (ou o botão **Escudo**). O braço de trás ergue o escudo na frente do corpo, as pernas se firmam e o herói anda devagar, sempre virado para a ameaça.
+
+| Situação | Resultado |
+|---|---|
+| Golpe pela frente com o escudo erguido | **Defesa**: passa só uma lasca do dano (Andarilho 15%, Bruxa 25%, Paladino 5%; o dobro contra o Guardião), o herói é empurrado para trás, com faíscas, som e tremor |
+| Escudo erguido até 0,18 s antes do golpe | **Defesa perfeita**: dano zero, anel de luz, quem atacou cambaleia (o Guardião também, respeitando o intervalo de 4 s entre cambaleios) |
+| Orbe do cultista no escudo | É absorvido; na defesa perfeita, volta como bola de fogo |
+| Golpe pelas costas, onda de choque, pisão ou meteoro | O escudo não protege: pule ou role |
+
+Cada personagem tem o seu: o **Andarilho** usa um broquel redondo de madeira com aro e cravo de ferro, o **Paladino** tira das costas o escudo com cruz, e a **Bruxa** ergue uma barreira de luz (um arco brilhante na camada de efeitos que também aquece o fogo em volta, na cor da paleta dela). O escudo não se usa junto com magia ou espada.
+
+**Rolamento**: aperte `C` (ou o botão **Rolar**), para a direção apertada ou para a frente. O herói se encolhe numa bola e gira 360° rolando uns 50 px em 0,42 s, desacelerando no fim. Ele fica **invulnerável desde o início até 0,32 s**, então atravessa golpes, inimigos, orbes, ondas de choque e meteoros. Depois há 0,25 s até poder rolar de novo.
+
+O giro reaproveita o esqueleto: uma pose encolhida (joelhos no peito, braços abraçando as pernas, queixo para baixo) é montada com as mesmas juntas e rotacionada em volta do centro do corpo. Ela se mistura com a pose normal na entrada e na saída do rolamento, e o cachecol e o capuz seguem pela física.
+
+O piloto automático também se defende:
+- levanta o escudo no momento certo contra golpes de frente, inclusive o do Guardião, e faz defesa perfeita;
+- não começa magia nem golpe quando um inimigo próximo está preparando um ataque;
+- usa o escudo contra orbes;
+- rola através das ondas de choque e para fora das marcas de meteoro;
+- rola por cima do inimigo quando fica encurralado.
+
 ## Controles
 
 | Tecla | Ação |
@@ -210,6 +235,8 @@ A espada fica na mão por um instante depois do último golpe. Golpe e magia nã
 | `Shift` | Correr |
 | `↑` / `W` / `Espaço` | Pular |
 | `↓` / `S` | Agachar (desvia dos orbes do cultista) |
+| `L` (segurar) | Escudo (levantar logo antes do golpe = defesa perfeita) |
+| `C` | Rolamento |
 | `J` / `X` | Espada (aperte de novo durante o golpe para o combo) |
 | `F` / `Q` (segurar) | Carregar e lançar a magia |
 | `E` | Dissolver e teleportar |

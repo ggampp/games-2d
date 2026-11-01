@@ -8,8 +8,9 @@
 const keys = new Set();
 let jumpPressed = false;
 let swordPressed = false;
+let rollPressed = false;
 const HERO_KEYS = { Digit1: 'andarilho', Digit2: 'bruxa', Digit3: 'paladino' };
-const MOVE_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD', 'KeyW', 'KeyS', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyE', 'KeyF', 'KeyQ', 'KeyJ', 'KeyX']);
+const MOVE_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyA', 'KeyD', 'KeyW', 'KeyS', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyE', 'KeyF', 'KeyQ', 'KeyJ', 'KeyX', 'KeyL', 'KeyC']);
 
 function takeControl() {
   if (!cfg.auto) return;
@@ -26,6 +27,7 @@ window.addEventListener('keydown', (e) => {
   keys.add(e.code);
   if (!e.repeat && (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'Space')) jumpPressed = true;
   if (!e.repeat && (e.code === 'KeyJ' || e.code === 'KeyX')) swordPressed = true;
+  if (!e.repeat && e.code === 'KeyC') rollPressed = true;
   if (!e.repeat && e.code === 'KeyE') startDissolve();
   if (!e.repeat && e.code === 'KeyK') { cfg.skeleton = !cfg.skeleton; ui.skeleton.checked = cfg.skeleton; }
   if (!e.repeat && HERO_KEYS[e.code]) { ui.hero.value = HERO_KEYS[e.code]; applyHero(); }
@@ -42,6 +44,7 @@ document.querySelectorAll('[data-hold]').forEach((btn) => {
     keys.add(code);
     if (code === 'ArrowUp') jumpPressed = true;
     if (code === 'Sword') swordPressed = true;
+    if (code === 'Roll') rollPressed = true;
   };
   const up = () => keys.delete(code);
   btn.addEventListener('pointerdown', down);
@@ -60,9 +63,12 @@ function keyboardInput() {
     jump: jumpPressed,
     cast: keys.has('KeyF') || keys.has('KeyQ') || keys.has('Cast'),
     sword: swordPressed,
+    block: keys.has('KeyL') || keys.has('Block'),
+    roll: rollPressed,
   };
   jumpPressed = false;
   swordPressed = false;
+  rollPressed = false;
   return input;
 }
 
@@ -79,26 +85,40 @@ function autopilotInput(dt) {
   if (ai.casting > 0) { ai.casting -= dt; return { ...idle, crouch: false, cast: true }; }
   if (ch.dead || dissolve.state !== 'none' || spell.state !== 'idle' || ch.hurt > 0) return idle;
 
-  // Dodge: duck under shadow orbs, jump over shockwaves.
+  if (defense.rolling) return idle;
+  // Dodge: block or duck shadow orbs, roll through (or jump) shockwaves.
   for (const s of eshots) {
     const ahead = (ch.x - s.x) * Math.sign(s.vx);
-    if (ahead > 0 && ahead < 34) return { ...idle, crouch: true };
+    if (ahead > 0 && ahead < 34) {
+      // Face the orb and raise the shield just before it arrives (a perfect block sends it back).
+      if (ahead < 16 && !defense.block) { ch.facing = -Math.sign(s.vx); return { ...idle, crouch: false, block: true }; }
+      if (defense.block) return { ...idle, crouch: false, block: true };
+      return { ...idle, crouch: true };
+    }
   }
   for (const w of shockwaves) {
     const gap = Math.abs(ch.x - w.x) - w.t * SHOCK_SPEED;
-    if (gap > 0 && gap < 16 && ch.onGround) return { ...idle, jump: true };
+    if (gap > 0 && gap < 24 && ch.onGround) {
+      if (defense.rollCd <= 0 && gap > 8) return { ...idle, roll: true, dir: Math.sign(w.x - ch.x) || ch.facing }; // through it
+      return { ...idle, jump: true };
+    }
   }
   // Step away from the glowing meteor markers.
   for (const m of meteors) {
     if (m.t > -0.3 && Math.abs(ch.x - m.x) < 13) {
       const away = ch.x < m.x ? -1 : 1;
       const blocked = (away < 0 && ch.x < ARENA_X0 + 16) || (away > 0 && ch.x > W - 16);
-      return { ...idle, crouch: false, dir: blocked ? -away : away, run: true };
+      const dir = blocked ? -away : away;
+      if (m.t > m.warn - 0.25 && defense.rollCd <= 0) return { ...idle, crouch: false, roll: true, dir }; // roll out at the last moment
+      return { ...idle, crouch: false, dir, run: true };
     }
   }
-  // Jump over the boss's sword swing when it is close.
+  // The boss's sword swing: raise the shield right before it lands (a perfect block staggers him).
   const bossE = BOSS.active;
-  if (bossE && bossE.state === 'sweepWind' && bossE.t > 0.35 && Math.abs(bossE.x - ch.x) < 50 && ch.onGround) return { ...idle, jump: true };
+  if (bossE && bossE.state === 'sweepWind' && Math.abs(bossE.x - ch.x) < 52 && ch.onGround) {
+    const windup = 0.7 * (bossRage(bossE) ? 0.7 : 1);
+    if (bossE.t > windup - 0.15 || defense.block) { ch.facing = Math.sign(bossE.x - ch.x) || ch.facing; return { ...idle, crouch: false, block: true }; }
+  }
 
   // Fight the nearest enemy that is on or near the screen.
   let foe = null;
@@ -122,6 +142,17 @@ function autopilotInput(dt) {
         return { ...idle, crouch: false, jump: true, cast: true };
       }
     } else {
+      // Raise the shield right before a frontal melee hit lands (a perfect block staggers them).
+      const windup = e.def.melee && e.state === 'windup' && !e.def.melee.slam ? e.def.melee.windup
+        : e.type === 'boss' && e.state === 'sweepWind' ? 0.7 * (bossRage(e) ? 0.7 : 1) : 0;
+      if (windup && dist < 52 && e.t > windup - 0.15) {
+        ch.facing = Math.sign(d) || ch.facing;
+        return { ...idle, crouch: false, block: true };
+      }
+      // Don't start a spell or a swing into a wind-up: wait for the moment to raise the shield.
+      if (windup && dist < 52) { ch.facing = Math.sign(d) || ch.facing; return { ...idle, crouch: false }; }
+      // Cornered: roll through the enemy instead of being pinned.
+      if (cornered && dist < 24 && defense.rollCd <= 0 && e.type !== 'boss') return { ...idle, crouch: false, roll: true, dir: Math.sign(d) };
       // Up close against something small: use the sword (keeps pressing to chain the combo).
       const small = e.type === 'ghoul' || e.type === 'cultist' || (e.def.fly && e.y > ch.y - 34);
       if (small && dist < 20 + weapon().len * 0.6 && !low) {
@@ -274,6 +305,7 @@ function tick() {
   // Hit-stop: freeze the world for a few frames so a hit lands with weight.
   if (hitstop > 0) { hitstop -= DT; return; }
   const input = cfg.auto ? autopilotInput(DT) : keyboardInput();
+  updateDefense(DT, input);
   updateCharacter(DT, input);
   updateSpell(DT, input.cast);
   updateMelee(DT, input.sword);

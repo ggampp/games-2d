@@ -48,6 +48,7 @@
       pointer-events: none;
     }
     .touch div { display: flex; gap: 6px; }
+    .touch div:last-child { display: grid; grid-template-columns: repeat(3, auto); align-content: end; }
     .touch button {
       pointer-events: auto;
       width: 50px; height: 50px; border-radius: 50%;
@@ -73,7 +74,7 @@
       font: 600 13px var(--mono); cursor: pointer;
     }
     .sound-on:hover { background: rgba(224, 112, 44, .25); }
-    @media (max-width: 560px) { .sound-on { top: auto; bottom: 80px; } }
+    @media (max-width: 560px) { .sound-on { top: auto; bottom: 132px; } }
     @media (prefers-reduced-motion: reduce) { .banner { transition: none; } }
     .controls {
       background: var(--panel);
@@ -120,6 +121,8 @@
       </div>
       <div>
         <button data-hold="Run">Correr</button>
+        <button data-hold="Block">Escudo</button>
+        <button data-hold="Roll">Rolar</button>
         <button data-hold="Sword">Espada</button>
         <button data-hold="Cast">Magia</button>
         <button data-hold="ArrowUp">Pular</button>
@@ -166,16 +169,19 @@
     <label><input id="shading" type="checkbox" checked /> Sombreado</label>
     <label><input id="skeleton" type="checkbox" /> <span class="bone">Esqueleto</span></label>
     <label><input id="auto" type="checkbox" checked /> Piloto automático</label>
+    <button id="block" data-hold="Block" title="Segure para defender; levantar logo antes do golpe é defesa perfeita">Escudo (L)</button>
+    <button id="roll" data-hold="Roll" title="Rolamento com invulnerabilidade no meio">Rolar (C)</button>
     <button id="sword" data-hold="Sword" title="Aperte no ritmo para encadear 3 golpes">Espada (J)</button>
     <button id="cast" data-hold="Cast" title="Segure para carregar, solte para lançar">Magia (segure)</button>
     <button id="dissolve">Dissolver</button>
-    <span class="hint">←→ andar · Shift correr · ↑ pular · ↓ agachar (desvia de orbes) · J espada (combo) · F segurar: magia · E dissolver · 1 2 3 personagem · K esqueleto</span>
+    <span class="hint">←→ andar · Shift correr · ↑ pular · ↓ agachar (desvia de orbes) · J espada (combo) · L escudo · C rolar · F segurar: magia · E dissolver · 1 2 3 personagem · K esqueleto</span>
   </div>
 
   <script src="audio.js"></script>
   <script src="walker.js"></script>
   <script src="heroes.js"></script>
   <script src="melee.js"></script>
+  <script src="defense.js"></script>
   <script src="enemies.js"></script>
   <script src="boss.js"></script>
   <script src="world.js"></script>
