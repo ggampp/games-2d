@@ -17,11 +17,15 @@ npx serve .        # ou: python3 -m http.server
 | `audio.js` | Áudio procedural (Web Audio API): efeitos sonoros sintetizados e o sequenciador de música |
 | `walker.js` | Núcleo: configuração, paletas, herói (física, pose, desenho do Andarilho), magia, rasterização por id de parte e sombreamento, simulação do fogo |
 | `melee.js` | Ataque com espada: combo de 3 golpes, golpe no ar, acerto ao longo da lâmina, rebate de orbes e arco de fogo |
+| `defense.js` | Escudo (defesa e defesa perfeita) e rolamento (esquiva com invulnerabilidade) |
 | `heroes.js` | Personagens jogáveis: atributos, movimento secundário, desenho da Bruxa e do Paladino, e as magias de cada um |
 | `enemies.js` | Tipos de inimigo, ondas, vida, golpes, queima, projéteis e onda de choque |
 | `boss.js` | O Guardião do Portão: arena, ataques, fúria, meteoros |
 | `world.js` | Câmera, camadas com parallax, áreas do cenário, piso e braseiros |
-| `render.js` | Composição da janela da câmera, barras de vida e esqueleto sobreposto |
+| `render.js` | Composição da janela da câmera, barras de vida e desenho na tela em escala inteira |
+| `hud.js` | Fontes de pixel (3×5 e 5×7), HUD, avisos e o esqueleto desenhados no próprio quadro |
+| `lineup.js` | Vitrine 1x: todos os personagens parados lado a lado, junto de um tile do piso |
+| `tools/pixel-check.js` | Verificação automática das regras de exibição (Playwright) |
 | `main.js` | Teclado e toque, piloto automático, interface e loop principal |
 
 Os scripts são clássicos (sem módulos) e compartilham o escopo global; a ordem de carga no `index.html` importa.
@@ -55,7 +59,7 @@ Depois, um passe de **sombreamento** escolhe um de 4 tons por pixel, a partir de
 
 Por fim, um contorno de 1 px, a sombra no chão (que diminui no pulo) e o brilho do fogo nas bordas do personagem. Na resolução baixa a matemática some e parece pixel art desenhada. Desligue **Sombreado** para comparar com as cores chapadas.
 
-Ligue **Esqueleto** (`K`) para ver os ossos, as juntas e o alvo de IK de cada pé por cima dos pixels.
+Ligue **Esqueleto** (`K`) para ver os ossos, as juntas e o alvo de IK de cada pé por cima dos pixels, desenhados com linhas de 1 px no próprio quadro.
 
 ### 3. Fogo alimentado pela silhueta
 
@@ -202,6 +206,56 @@ Cada personagem tem sua lâmina:
 
 A espada fica na mão por um instante depois do último golpe. Golpe e magia não se misturam: um espera o outro terminar. O piloto automático usa a espada contra carniçais, cultistas e morcegos que chegam perto, e a magia contra os grandes.
 
+### 13. Escudo e rolamento
+
+**Escudo**: segure `L` (ou o botão **Escudo**). O braço de trás ergue o escudo na frente do corpo, as pernas se firmam e o herói anda devagar, sempre virado para a ameaça.
+
+| Situação | Resultado |
+|---|---|
+| Golpe pela frente com o escudo erguido | **Defesa**: passa só uma lasca do dano (Andarilho 15%, Bruxa 25%, Paladino 5%; o dobro contra o Guardião), o herói é empurrado para trás, com faíscas, som e tremor |
+| Escudo erguido até 0,18 s antes do golpe | **Defesa perfeita**: dano zero, anel de luz, quem atacou cambaleia (o Guardião também, respeitando o intervalo de 4 s entre cambaleios) |
+| Orbe do cultista no escudo | É absorvido; na defesa perfeita, volta como bola de fogo |
+| Golpe pelas costas, onda de choque, pisão ou meteoro | O escudo não protege: pule ou role |
+
+Cada personagem tem o seu: o **Andarilho** usa um broquel redondo de madeira com aro e cravo de ferro, o **Paladino** tira das costas o escudo com cruz, e a **Bruxa** ergue uma barreira de luz (um arco brilhante na camada de efeitos que também aquece o fogo em volta, na cor da paleta dela). O escudo não se usa junto com magia ou espada.
+
+**Rolamento**: aperte `C` (ou o botão **Rolar**), para a direção apertada ou para a frente. O herói se encolhe numa bola e dá uma volta inteira, em 8 passos de 45°, rolando uns 50 px em 0,42 s, desacelerando no fim. Ele fica **invulnerável desde o início até 0,32 s**, então atravessa golpes, inimigos, orbes, ondas de choque e meteoros. Depois há 0,25 s até poder rolar de novo.
+
+O giro reaproveita o esqueleto: uma pose encolhida (joelhos no peito, braços abraçando as pernas, queixo para baixo) é montada com as mesmas juntas, girada em passos de 45° em volta do centro do corpo e rasterizada de novo a cada passo, como 8 quadros desenhados. Ela se mistura com a pose normal na entrada e na saída do rolamento, e o cachecol e o capuz seguem pela física.
+
+O piloto automático também se defende:
+- levanta o escudo no momento certo contra golpes de frente, inclusive o do Guardião, e faz defesa perfeita;
+- não começa magia nem golpe quando um inimigo próximo está preparando um ataque;
+- usa o escudo contra orbes;
+- rola através das ondas de choque e para fora das marcas de meteoro;
+- rola por cima do inimigo quando fica encurralado.
+
+### 14. Regras de pixel art
+
+O quadro do jogo tem **256×144** e tudo (personagens, inimigos, cenário, fogo, faíscas, barras, textos) é desenhado nele, um pixel do quadro por pixel de arte. Só no fim ele vai para a tela:
+
+| Regra | Como o jogo cumpre |
+|---|---|
+| Filtro *nearest* em todo lugar, sem compressão | O quadro é um `ImageData` sem perda. Na tela: `imageSmoothingEnabled = false` e `image-rendering: pixelated`. Não há texturas, mipmaps nem imagens carregadas |
+| Resolução base e só escala inteira, com barras pretas | Escala = o maior inteiro que cabe (`floor`, nunca abaixo de 1). Um canvas de 1280×720 fica em 5x exatos e um de 1920×1080 em 7x, com barras; no celular em pé, uma escala inteira maior que mostra uns 55% da largura e segue o herói. O resto do canvas é preto puro. O canvas usa os **pixels reais do aparelho** (`devicePixelContentBoxSize` / `devicePixelRatio` sem limite), então o navegador não reescala a imagem por cima |
+| Câmera e sprites em pixels inteiros | A câmera anda em pixels inteiros; a parte visível no celular e o tremor de tela andam em pixels inteiros do quadro. Cada personagem é montado a partir de uma raiz arredondada (`Math.round(x)`, `Math.round(y)`), então ele se move por inteiro, pixel a pixel, em vez de o desenho mudar conforme a posição fracionária. Sombras e efeitos (orbes, projéteis, brasas) também são centrados em pixels inteiros |
+| Um tamanho de pixel para tudo | Nada é escalado. Os inimigos variam de proporção, mas são desenhados de novo em 1 px, nunca esticados. HUD, avisos e o esqueleto de depuração são desenhados no quadro, em 1 px |
+| Sem rotação de pixel art | Nenhuma imagem é girada. O rolamento e o morcego caindo giram em **passos de 45°** (como 8 quadros desenhados), e cada passo é rasterizado de novo, com contorno e sombreamento próprios |
+| Fonte de pixel no tamanho nativo | Duas fontes bitmap no próprio quadro: **3×5** (HUD, nome do chefe, vitrine) e **5×7** (avisos como "Onda 3" e "Vitória!"), com acentos do português. Os avisos aparecem letra a letra e as letras são fonte de calor do fogo, que sobe delas |
+| Partículas e efeitos na mesma grade | Fogo, faíscas, magia, rastro da espada e barreira da Bruxa ficam em buffers do mesmo tamanho do mundo, um valor por pixel |
+| Novo asset ao lado de um tile em 1x | **Vitrine 1x** (`V` ou a caixa nas opções, ou `index.html?vitrine`): o jogo para e mostra os três heróis, os quatro inimigos e o Guardião lado a lado sobre o piso das Ruínas, com um tijolo de **12×5** contornado e identificado |
+
+O título e a descrição ficam fora do quadro, numa faixa acima dele; o texto do HUD e dos avisos continua no HTML só para leitores de tela.
+
+Para conferir as regras de exibição em vários tamanhos de tela e densidades de pixel (1x, 1,25x, 1,5x, 2x, 2,625x e 3x):
+
+```bash
+node tools/pixel-check.js            # o jogo
+node tools/pixel-check.js --vitrine  # a vitrine
+```
+
+Ele confirma que a escala é inteira, que cada pixel do quadro vira um bloco uniforme na tela, que as barras são pretas e que o canvas não é reescalado pelo navegador.
+
 ## Controles
 
 | Tecla | Ação |
@@ -210,10 +264,13 @@ A espada fica na mão por um instante depois do último golpe. Golpe e magia nã
 | `Shift` | Correr |
 | `↑` / `W` / `Espaço` | Pular |
 | `↓` / `S` | Agachar (desvia dos orbes do cultista) |
+| `L` (segurar) | Escudo (levantar logo antes do golpe = defesa perfeita) |
+| `C` | Rolamento |
 | `J` / `X` | Espada (aperte de novo durante o golpe para o combo) |
 | `F` / `Q` (segurar) | Carregar e lançar a magia |
 | `E` | Dissolver e teleportar |
 | `1` `2` `3` | Andarilho, Bruxa, Paladino |
 | `K` | Mostrar o esqueleto |
+| `V` | Vitrine 1x |
 
-No celular aparecem botões na tela, e a câmera dá zoom e segue o personagem. O **piloto automático** luta sozinho (ou anda e treina no boneco quando os inimigos estão desligados) até você usar um controle.
+No celular aparecem botões na tela, e a câmera dá zoom (sempre em escala inteira) e segue o personagem. O **piloto automático** luta sozinho (ou anda e treina no boneco quando os inimigos estão desligados) até você usar um controle.

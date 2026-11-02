@@ -144,8 +144,15 @@ function allocBuffers() {
   image32 = new Uint32Array(image.data.buffer);
 }
 
-function fitCanvas() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+// The backing store matches the device pixels, so the browser never resamples it.
+function fitCanvas(entry) {
+  const dpr = window.devicePixelRatio || 1;
+  const box = entry && entry.devicePixelContentBoxSize && entry.devicePixelContentBoxSize[0];
+  if (box && Math.abs(box.inlineSize - entry.contentRect.width * dpr) < 1.5) {
+    canvas.width = Math.max(1, box.inlineSize);
+    canvas.height = Math.max(1, box.blockSize);
+    return;
+  }
   const rect = canvas.getBoundingClientRect();
   canvas.width = Math.max(1, Math.round(rect.width * dpr));
   canvas.height = Math.max(1, Math.round(rect.height * dpr));
@@ -156,13 +163,16 @@ function drawPixels() {
   for (let i = 0; i < pixels.length; i++) image32[i] = PALETTE32[pixels[i]];
   offCtx.putImageData(image, 0, 0);
   ctx.imageSmoothingEnabled = false;
-  ctx.fillStyle = '#070707';
+  ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  // "Cover" scaling: fill the canvas, crop the sides on tall screens, anchor to the bottom.
-  const scale = Math.max(canvas.width / fire.w, canvas.height / fire.h);
-  const dw = fire.w * scale, dh = fire.h * scale;
-  ctx.drawImage(off, (canvas.width - dw) / 2, canvas.height - dh, dw, dh);
+  // Pixel art: only whole-number scales (nearest neighbor), black bars around,
+  // anchored to the bottom so the flames rise from the screen's edge.
+  const s = Math.max(1, Math.floor(Math.min(canvas.width / fire.w, canvas.height / fire.h)));
+  const dw = fire.w * s, dh = fire.h * s;
+  view = { s, ox: Math.floor((canvas.width - dw) / 2), oy: canvas.height - dh };
+  ctx.drawImage(off, view.ox, view.oy, dw, dh);
 }
+let view = { s: 1, ox: 0, oy: 0 };
 
 function drawDebug() {
   const { w, h, pixels } = fire;
@@ -274,7 +284,9 @@ window.addEventListener('keydown', (e) => {
 // Click / drag on the canvas paints a heat source at that column of the bottom row.
 function heatAt(clientX) {
   const rect = canvas.getBoundingClientRect();
-  const x = Math.floor(((clientX - rect.left) / rect.width) * fire.w);
+  const devX = (clientX - rect.left) * (canvas.width / rect.width);
+  const x = state.debug ? Math.floor(((clientX - rect.left) / rect.width) * fire.w) : Math.floor((devX - view.ox) / view.s);
+  if (x < 0 || x >= fire.w) return;
   const r = Math.max(1, Math.round(fire.w / 24));
   const base = (fire.h - 1) * fire.w;
   for (let i = Math.max(0, x - r); i <= Math.min(fire.w - 1, x + r); i++) fire.pixels[base + i] = MAX;
@@ -292,7 +304,8 @@ for (let i = 0; i <= MAX; i++) {
   ui.palette.appendChild(s);
 }
 
-new ResizeObserver(() => { fitCanvas(); render(); }).observe(canvas);
+const resizer = new ResizeObserver(([entry]) => { fitCanvas(entry); render(); });
+try { resizer.observe(canvas, { box: 'device-pixel-content-box' }); } catch { resizer.observe(canvas); }
 
 fitCanvas();
 allocBuffers();

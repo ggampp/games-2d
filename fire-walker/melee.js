@@ -47,7 +47,7 @@ const melee = { state: 'idle', combo: 0, t: 0, buffer: 0, swing: null, hit: new 
 const swordOut = () => (melee.state === 'swing' && melee.t >= melee.drawAt) || melee.drawn > 0;
 
 function canSwing() {
-  return !ch.dead && dissolve.state === 'none' && spell.state === 'idle' && ch.hurt <= 0;
+  return !ch.dead && dissolve.state === 'none' && spell.state === 'idle' && ch.hurt <= 0 && !defense.block && !defense.rolling;
 }
 
 function startSwing(combo) {

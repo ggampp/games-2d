@@ -194,7 +194,7 @@ const gong = (d, base, dur, vol, t) => [1, 1.42, 2.03, 2.7, 3.9].forEach((m, i) 
 // ---------------------------------------------------------------------------
 // Sound effects
 // ---------------------------------------------------------------------------
-const SFX_GAP = { slash: 0.02, step: 0.1, crackle: 0.01, ignite: 0.08, hit: 0.03, meteor: 0.1, land: 0.1, explode: 0.04 };
+const SFX_GAP = { dodge: 0.2, block: 0.04, slash: 0.02, step: 0.1, crackle: 0.01, ignite: 0.08, hit: 0.03, meteor: 0.1, land: 0.1, explode: 0.04 };
 
 function sfx(name, o = {}) {
   if (!audio.ctx || !audio.enabled || audio.ctx.state !== 'running') return;
@@ -254,6 +254,34 @@ function sfx(name, o = {}) {
       tone(d, { f0: 120, f1: 35, dur: (0.35 + p * 0.35) * k, vol: (0.3 + p * 0.25) * k });
       break;
     }
+    case 'raise': noise(out(x), { ft: 'bandpass', f0: 500, f1: 900, dur: 0.1, vol: 0.06, q: 2 }); break;
+    case 'block': {
+      const d = out(x, 0.25);
+      if (cfg.hero === 'bruxa') {
+        // A magical barrier rings instead of clanging.
+        tone(d, { f0: 1180, dur: 0.5, vol: 0.06 });
+        tone(d, { f0: 1770, dur: 0.4, vol: 0.04 });
+      } else {
+        thud(d, 0.22, 120);
+        tone(d, { type: 'square', f0: 820, dur: 0.25, vol: 0.04, lp: 1600, ft: 'bandpass', q: 6 });
+      }
+      break;
+    }
+    case 'perfect': {
+      const d = out(x, 0.5);
+      tone(d, { type: 'square', f0: 1760, dur: 0.7, vol: 0.05, lp: 3000, ft: 'bandpass', q: 9 });
+      tone(d, { type: 'square', f0: 2640, dur: 0.5, vol: 0.035, lp: 4200, ft: 'bandpass', q: 9 });
+      tone(d, { type: 'triangle', f0: 1320, f1: 1980, dur: 0.35, vol: 0.06 });
+      noise(d, { ft: 'highpass', f0: 3500, dur: 0.1, vol: 0.1 });
+      break;
+    }
+    case 'roll': {
+      const d = out(x);
+      noise(d, { f0: 700, f1: 250, dur: 0.38, vol: 0.12, a: 0.03 });
+      thud(d, 0.08, 100, audio.ctx.currentTime + 0.1);
+      break;
+    }
+    case 'dodge': noise(out(x, 0.2), { ft: 'bandpass', f0: 1800, f1: 600, dur: 0.15, vol: 0.08, q: 2 }); break;
     case 'draw': {
       // The blade sliding out of the scabbard.
       const d = out(x);

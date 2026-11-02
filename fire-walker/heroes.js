@@ -154,6 +154,7 @@ function drawCharacter() {
   else if (cfg.hero === 'paladino') drawPaladino();
   else drawAndarilho();
   drawSword(); // melee.js
+  drawShield(); // defense.js
 }
 
 // Forearm direction (elbow -> wrist), normalized.
@@ -263,7 +264,7 @@ function drawPaladino() {
   // Cape behind everything, and the shield strapped on the back.
   chain(ch.scarfB, 2.6, 3.4, part('cape', true));
   chain(ch.scarfA, 2.4, 3.2, part('cape', true));
-  {
+  if (defense.blockK < 0.35 || defense.rolling) {
     const c = torsoPt(-4.2, T * 0.55);
     const up = pose.up;
     const fw = pose.fw;

@@ -108,7 +108,7 @@ function updateBoss(e, dt) {
         if (e.t > 0.7 * k) {
           e.state = 'sweep'; e.t = 0;
           const inFront = Math.sign(toP) === e.facing || dist < 14;
-          if (hero && inFront && dist < 48 && ch.y > FEET_Y - 22) playerHit(e.facing, rage ? 24 : 18, 1.4);
+          if (hero && inFront && dist < 48 && ch.y > FEET_Y - 22) playerHit(e.facing, rage ? 24 : 18, 1.4, e);
           shake = Math.max(shake, 2);
           sfx('sweep', { x: e.x });
         }
@@ -121,7 +121,7 @@ function updateBoss(e, dt) {
           sfx('slam', { x, big: true });
           shake = Math.max(shake, 4.5);
           emberBurst(x, GROUND - 2, 24, 0.8);
-          if (hero && Math.abs(ch.x - x) < 16 && ch.y > FEET_Y - 6) playerHit(Math.sign(ch.x - e.x) || e.facing, rage ? 22 : 18, 1.3);
+          if (hero && Math.abs(ch.x - x) < 16 && ch.y > FEET_Y - 6) playerHit(Math.sign(ch.x - e.x) || e.facing, rage ? 22 : 18, 1.3, e, true);
         }
         break;
       case 'rainWind':
@@ -263,7 +263,7 @@ function updateMeteor(m, dt) {
     sfx('explode', { x: m.x, power: 0.6 });
     emberBurst(m.x, GROUND - 3, 10, 0.5);
     shake = Math.max(shake, 2);
-    if (heroTargetable() && Math.abs(ch.x - m.x) < 11 && ch.y > FEET_Y - 20) playerHit(Math.sign(ch.x - m.x) || 1, m.dmg, 1);
+    if (heroTargetable() && Math.abs(ch.x - m.x) < 11 && ch.y > FEET_Y - 20) playerHit(Math.sign(ch.x - m.x) || 1, m.dmg, 1, null, true);
   }
 }
 
