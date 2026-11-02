@@ -526,15 +526,17 @@ function computeWalkerPose(e, dt) {
   const panic = e.burn > 0 && def.panic && e.state !== 'dying';
   const hurtK = clamp(e.hurt / 0.3, 0, 1) * Math.min(1, def.kb * 1.5);
   const stride = (4 + speed * 0.08) * s;
-  const hipX = e.x;
-  const hipY = e.y - (th + sh) * 0.9 + e.kneel * th * 0.85 - Math.cos(2 * e.phase) * 0.8 * a;
+  const X0 = Math.round(e.x); // whole-pixel root, as for the hero
+  const Y0 = Math.round(e.y);
+  const hipX = X0;
+  const hipY = Y0 - (th + sh) * 0.9 + e.kneel * th * 0.85 - Math.cos(2 * e.phase) * 0.8 * a;
 
   const legs = [];
   for (let i = 0; i < 2; i++) {
     const ph = e.phase + i * Math.PI;
     const stand = (i === 0 ? 2 : -1.8) * s * (e.type === 'boss' ? 2.6 : e.type === 'brute' ? 1.6 : 1);
     let fx = hipX + f * (-Math.cos(ph) * (stride / 2) * a + stand * (1 - a));
-    const fy0 = e.y - Math.max(0, Math.sin(ph)) * 3 * s * a;
+    const fy0 = Y0 - Math.max(0, Math.sin(ph)) * 3 * s * a;
     if (e.kneel > 0) fx = lerp(fx, hipX + f * (i === 0 ? 5 : -6) * s, e.kneel);
     const fy = e.onGround ? fy0 : hipY + (th + sh) * 0.8;
     legs.push(ik(hipX, hipY, fx, fy, th, sh, f));
@@ -590,9 +592,12 @@ function computeBatPose(e) {
   let flap = Math.sin(e.flapPh);
   if (e.state === 'dive') flap = -0.6 + Math.sin(e.flapPh) * 0.15; // wings tucked
   if (e.state === 'dying') flap = Math.sin(e.flapPh) * 0.5;
-  const c = Math.cos(e.spin);
-  const sn = Math.sin(e.spin);
-  const P = (dx, dy) => [e.x + dx * c - dy * sn, e.y + dx * sn + dy * c];
+  const spin = (Math.PI / 4) * Math.round(e.spin / (Math.PI / 4)); // 45° steps
+  const c = Math.cos(spin);
+  const sn = Math.sin(spin);
+  const X0 = Math.round(e.x);
+  const Y0 = Math.round(e.y);
+  const P = (dx, dy) => [X0 + dx * c - dy * sn, Y0 + dx * sn + dy * c];
   const wing = (k) => ({
     sh: P(k * 1.5 * s, -1 * s),
     el: P(k * 6 * s, (-3 - flap * 4) * s),

@@ -7,8 +7,8 @@
 // Hits from below or above (shockwaves, meteors, slams) can't be blocked.
 //
 // Roll (tap): the hero tucks into a ball and rolls ~50 px; the middle of the roll
-// is invulnerable. The tucked pose is built from the same joints and rotated
-// 360° around the body's center, so the whole character really spins.
+// is invulnerable. The tucked pose is built from the same joints and turned
+// 360° around the body's center in eight 45° steps, then rasterized fresh.
 
 'use strict';
 
@@ -135,8 +135,9 @@ function applyRollPose(P) {
   // Tuck in during the first 15%, open up in the last 15%.
   const w = p < 0.15 ? easeInOut(p / 0.15) : p > 0.85 ? easeInOut((1 - p) / 0.15) : 1;
   const f = P.f;
-  const ang = f * Math.PI * 2 * easeInOut(p);
-  const cx = ch.x;
+  // Eight 45° steps, like eight drawn frames, instead of a smooth arbitrary rotation.
+  const ang = f * (Math.PI / 4) * Math.round(easeInOut(p) * 8);
+  const cx = Math.round(ch.x);
   const cy = FEET_Y - 7;
   const c = Math.cos(ang);
   const s = Math.sin(ang);

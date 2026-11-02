@@ -461,9 +461,13 @@ function computePose(t) {
 
   const bob = -Math.cos(2 * ch.phase) * (0.7 + run * 0.8) * a * ground;
   const breathe = Math.sin(t * 2.2) * (1 - a);
-  const hipX = ch.x;
+  // The body is built from a root snapped to whole pixels, so moving the character
+  // moves the sprite rigidly by whole pixels instead of re-sampling its shape.
+  const X0 = Math.round(ch.x);
+  const Y0 = Math.round(ch.y);
+  const hipX = X0;
   const bk = defense.blockK; // shield raised (defense.js)
-  const hipY = ch.y - LEG * 0.93 + crouch * 6.5 + bob + (cast ? cast.lunge * ck * 2 : 0) + bk * 1.5;
+  const hipY = Y0 - LEG * 0.93 + crouch * 6.5 + bob + (cast ? cast.lunge * ck * 2 : 0) + bk * 1.5;
 
   const legs = [];
   for (let i = 0; i < 2; i++) {
@@ -475,7 +479,7 @@ function computePose(t) {
     const off = -Math.cos(ph) * (ch.stride / 2) * a + stand * (1 - a);
     const lift = Math.max(0, Math.sin(ph)) * cfg.step * (1 + run * 0.6) * a;
     let fx = hipX + f * off;
-    let fy = ch.y - lift;
+    let fy = Y0 - lift;
     // Tuck the legs while airborne.
     fx = lerp(fx, hipX + f * (i === 0 ? 3.5 : -2), air);
     fy = lerp(fy, hipY + LEG * (i === 0 ? 0.62 : 0.78), air);
@@ -607,7 +611,7 @@ function plot(x, y, p) {
   x = Math.round(x); y = Math.round(y);
   if (x >= 0 && x < W && y >= 0 && y < H) pbuf[y * W + x] = p;
 }
-// Pixel-center test against the true circle keeps sub-pixel motion smooth.
+// Pixel-center test against the true circle (body parts; roots are snapped in the poses).
 function disk(cx, cy, r, p) {
   const x0 = Math.floor(cx - r);
   const x1 = Math.ceil(cx + r);
@@ -992,6 +996,7 @@ function seedFire() {
   seedSpell();
   seedEnemies();
   seedWorld();
+  seedBanner();
   if (dissolve.state !== 'none') { landingBurst = 0; return; } // the dissolve seeds its own cut line
 
   let heat = 0;
@@ -1020,6 +1025,9 @@ function seedFire() {
 const fx = new Uint8Array(W * H);
 
 function fxDisk(cx, cy, r, edge) {
+  // Effects sit on whole pixels too: a moving bolt keeps its shape and steps 1 px at a time.
+  cx = Math.round(cx);
+  cy = Math.round(cy);
   for (let y = Math.floor(cy - r); y <= Math.ceil(cy + r); y++) {
     if (y < 0 || y >= H) continue;
     for (let x = Math.floor(cx - r); x <= Math.ceil(cx + r); x++) {

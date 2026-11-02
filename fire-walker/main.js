@@ -29,6 +29,7 @@ window.addEventListener('keydown', (e) => {
   if (!e.repeat && (e.code === 'KeyJ' || e.code === 'KeyX')) swordPressed = true;
   if (!e.repeat && e.code === 'KeyC') rollPressed = true;
   if (!e.repeat && e.code === 'KeyE') startDissolve();
+  if (!e.repeat && e.code === 'KeyV') { ui.lineup.checked = !lineup.on; setLineup(!lineup.on); }
   if (!e.repeat && e.code === 'KeyK') { cfg.skeleton = !cfg.skeleton; ui.skeleton.checked = cfg.skeleton; }
   if (!e.repeat && HERO_KEYS[e.code]) { ui.hero.value = HERO_KEYS[e.code]; applyHero(); }
 });
@@ -230,6 +231,7 @@ const ui = {
   sfxVol: document.getElementById('sfxVol'),
   soundOn: document.getElementById('soundOn'),
   banner: document.getElementById('banner'),
+  lineup: document.getElementById('lineup'),
   flamesVal: document.getElementById('flamesVal'),
   stepVal: document.getElementById('stepVal'),
   speedVal: document.getElementById('speedVal'),
@@ -250,6 +252,7 @@ ui.shading.addEventListener('change', () => { cfg.shading = ui.shading.checked; 
 ui.skeleton.addEventListener('change', () => { cfg.skeleton = ui.skeleton.checked; });
 ui.auto.addEventListener('change', () => { cfg.auto = ui.auto.checked; ai.target = null; ai.wait = 0.3; });
 ui.dissolve.addEventListener('click', startDissolve);
+ui.lineup.addEventListener('change', () => setLineup(ui.lineup.checked));
 // Switching character also switches to that character's palette.
 function applyHero() {
   selectHero(ui.hero.value);
@@ -291,7 +294,6 @@ function updateHud() {
   if (b !== bannerShown) {
     bannerShown = b;
     ui.banner.textContent = b;
-    ui.banner.classList.toggle('show', !!b);
   }
 }
 
@@ -302,6 +304,7 @@ let simTime = 0;
 let tickCount = 0;
 
 function tick() {
+  if (lineup.on) { lineupTick(); return; } // Vitrine 1x: frozen showcase (lineup.js)
   // Hit-stop: freeze the world for a few frames so a hit lands with weight.
   if (hitstop > 0) { hitstop -= DT; return; }
   const input = cfg.auto ? autopilotInput(DT) : keyboardInput();
@@ -340,10 +343,13 @@ function frame(now) {
   audioUpdate(Math.min(0.1, DT * 2));
 }
 
-new ResizeObserver(() => { fitCanvas(); if (pose) draw(); }).observe(canvas);
+// Observe the exact device-pixel size where supported, so the backing store matches the screen.
+const resizer = new ResizeObserver(([entry]) => { fitCanvas(entry); if (pose) draw(); });
+try { resizer.observe(canvas, { box: 'device-pixel-content-box' }); } catch { resizer.observe(canvas); }
 fitCanvas();
 syncLabels();
 updateCamera(0, true);
+if (/[?&]vitrine\b/.test(location.search)) { ui.lineup.checked = true; setLineup(true); }
 // Warm up so the first frame already shows flames.
 for (let i = 0; i < 90; i++) tick();
 requestAnimationFrame((t) => { last = t; frame(t); });

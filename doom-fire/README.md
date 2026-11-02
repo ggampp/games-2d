@@ -32,6 +32,8 @@ function spreadFire(src) {
 
 Para apagar o fogo, basta zerar a linha de baixo: as chamas morrem sozinhas ao subir.
 
+Na tela, o grid é ampliado só por números inteiros, sem suavização (*nearest*), com barras pretas em volta e apoiado na borda de baixo. O canvas usa os pixels reais do aparelho, então cada célula vira um bloco do mesmo tamanho. Se a tela for menor que o grid, ele fica em 1x e é cortado.
+
 ## Controles
 
 | Controle | Efeito |

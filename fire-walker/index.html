@@ -23,22 +23,30 @@
       color: var(--text);
       font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       display: grid;
-      grid-template-rows: 1fr auto;
+      grid-template-rows: auto 1fr auto;
       overflow: hidden;
     }
-    .stage { position: relative; min-height: 0; }
-    #stage { width: 100%; height: 100%; display: block; touch-action: none; }
+    /* The game image is black-barred and only ever scaled by whole numbers (render.js).
+       Page text lives outside it; text inside it is the game's own pixel font. */
+    .stage { grid-row: 2; position: relative; min-height: 0; background: #000; }
+    .controls { grid-row: 3; }
+    #stage { width: 100%; height: 100%; display: block; touch-action: none; image-rendering: pixelated; image-rendering: crisp-edges; }
     .title {
-      position: absolute; top: 14px;
-      left: max(16px, env(safe-area-inset-left, 0px));
-      right: max(16px, env(safe-area-inset-right, 0px));
-      pointer-events: none;
-      text-shadow: 0 1px 6px #000;
+      background: var(--panel); border-bottom: 1px solid var(--border);
+      padding-block: 8px;
+      padding-left: max(16px, env(safe-area-inset-left, 0px));
+      padding-right: max(16px, env(safe-area-inset-right, 0px));
+      display: flex; align-items: baseline; gap: 16px;
     }
-    .title h1 { margin: 0; font: 700 18px/1.2 var(--mono); letter-spacing: .12em; }
-    .title p { margin: 4px 0 0; color: var(--muted); max-width: 60ch; }
-    @media (max-width: 560px) { .title p:not(.hud) { display: none; } }
-    .title .hud { color: var(--text); font: 600 13px var(--mono); font-variant-numeric: tabular-nums; }
+    .title h1 { margin: 0; font: 700 15px/1.2 var(--mono); letter-spacing: .12em; white-space: nowrap; }
+    .title p { margin: 0; color: var(--muted); font-size: 13px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    @media (max-width: 720px) { .title p { display: none; } }
+    /* Short (landscape phone) screens: no header, and the settings panel scrolls. */
+    @media (max-height: 500px) {
+      .title { display: none; }
+      .controls { max-height: 35vh; overflow-y: auto; overscroll-behavior: contain; }
+    }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
     .touch {
       position: absolute;
       bottom: max(12px, env(safe-area-inset-bottom, 0px));
@@ -59,14 +67,6 @@
     .touch button:active { border-color: var(--accent); background: rgba(224, 112, 44, .25); }
     @media (pointer: coarse) { .touch { display: flex; } }
     @media (max-width: 420px) { .touch button { width: 44px; height: 44px; font-size: 11px; } .touch div { gap: 4px; } }
-    .banner {
-      position: absolute; left: 0; right: 0; top: 38%;
-      text-align: center; pointer-events: none;
-      font: 700 28px/1 var(--mono); letter-spacing: .2em; text-transform: uppercase;
-      color: var(--text); text-shadow: 0 2px 0 #000, 0 0 18px rgba(224, 112, 44, .8);
-      opacity: 0; transform: scale(.92); transition: opacity .25s, transform .25s;
-    }
-    .banner.show { opacity: 1; transform: scale(1); }
     .sound-on {
       position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); top: 14px;
       background: rgba(19, 16, 25, .85); color: var(--text);
@@ -75,7 +75,6 @@
     }
     .sound-on:hover { background: rgba(224, 112, 44, .25); }
     @media (max-width: 560px) { .sound-on { top: auto; bottom: 132px; } }
-    @media (prefers-reduced-motion: reduce) { .banner { transition: none; } }
     .controls {
       background: var(--panel);
       border-top: 1px solid var(--border);
@@ -104,14 +103,14 @@
   </style>
 </head>
 <body>
+  <header class="title">
+    <h1>FIRE WALKER</h1>
+    <p>Nenhum quadro desenhado à mão: um esqueleto, senos e IK, desenhado em pixels a cada quadro. Atravesse cemitério, ruínas e vila até o Guardião do portão.</p>
+  </header>
   <div class="stage">
     <canvas id="stage" aria-label="Personagem pixelado animado proceduralmente com efeito de fogo"></canvas>
-    <div class="title">
-      <h1>FIRE WALKER</h1>
-      <p>Nenhum quadro desenhado à mão: um esqueleto, senos e IK, desenhado em pixels e sombreado a cada quadro. Escolha o Andarilho, a Bruxa ou o Paladino e atravesse cemitério, ruínas e vila até o Guardião, no fim do portão. Cada inimigo sente a magia e pega fogo. Tudo que queima é o fogo do DOOM.</p>
-      <p id="hud" class="hud" aria-live="polite"></p>
-    </div>
-    <div id="banner" class="banner" aria-live="polite"></div>
+    <p id="hud" class="sr-only" aria-live="polite"></p>
+    <p id="banner" class="sr-only" aria-live="assertive"></p>
     <button id="soundOn" class="sound-on">Ativar som</button>
     <div class="touch" aria-hidden="true">
       <div>
@@ -169,12 +168,13 @@
     <label><input id="shading" type="checkbox" checked /> Sombreado</label>
     <label><input id="skeleton" type="checkbox" /> <span class="bone">Esqueleto</span></label>
     <label><input id="auto" type="checkbox" checked /> Piloto automático</label>
+    <label title="Todos os personagens e inimigos parados em 1x, ao lado de um tile do piso"><input id="lineup" type="checkbox" /> Vitrine 1x</label>
     <button id="block" data-hold="Block" title="Segure para defender; levantar logo antes do golpe é defesa perfeita">Escudo (L)</button>
     <button id="roll" data-hold="Roll" title="Rolamento com invulnerabilidade no meio">Rolar (C)</button>
     <button id="sword" data-hold="Sword" title="Aperte no ritmo para encadear 3 golpes">Espada (J)</button>
     <button id="cast" data-hold="Cast" title="Segure para carregar, solte para lançar">Magia (segure)</button>
     <button id="dissolve">Dissolver</button>
-    <span class="hint">←→ andar · Shift correr · ↑ pular · ↓ agachar (desvia de orbes) · J espada (combo) · L escudo · C rolar · F segurar: magia · E dissolver · 1 2 3 personagem · K esqueleto</span>
+    <span class="hint">←→ andar · Shift correr · ↑ pular · ↓ agachar (desvia de orbes) · J espada (combo) · L escudo · C rolar · F segurar: magia · E dissolver · 1 2 3 personagem · K esqueleto · V vitrine</span>
   </div>
 
   <script src="audio.js"></script>
@@ -186,6 +186,8 @@
   <script src="boss.js"></script>
   <script src="world.js"></script>
   <script src="render.js"></script>
+  <script src="hud.js"></script>
+  <script src="lineup.js"></script>
   <script src="main.js"></script>
 </body>
 </html>

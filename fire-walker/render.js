@@ -57,15 +57,16 @@ function compose(visLeft = 0, visRight = VIEW_W) {
   // Ground shadows: the hero's shrinks as he rises.
   const visible = dissolve.state === 'none' || dissolve.state === 'in' ? 1 : dissolve.state === 'out' ? 1 - dissolve.t / DIS_OUT : 0;
   const rise = clamp((FEET_Y - ch.y) / 40, 0, 1);
-  const shadows = [{ x: ch.x, rx: 11 * (1 - rise * 0.6), k: 0.55 * visible * (1 - rise * 0.5) }];
+  const shadows = [{ x: Math.round(ch.x), rx: 11 * (1 - rise * 0.6), k: 0.55 * visible * (1 - rise * 0.5) }];
   for (const e of enemies) {
     if (e.cut !== null && e.cut > 0.85) continue;
     if (e.def.fly) {
       const h = clamp((FEET_Y - e.y) / 80, 0, 1);
-      shadows.push({ x: e.x, rx: 7 * (1 - h * 0.5), k: 0.35 * (1 - h * 0.6) });
-    } else shadows.push({ x: e.x, rx: (6 + e.def.halfW) * e.scale, k: 0.5 });
+      shadows.push({ x: Math.round(e.x), rx: 7 * (1 - h * 0.5), k: 0.35 * (1 - h * 0.6) });
+    } else shadows.push({ x: Math.round(e.x), rx: (6 + e.def.halfW) * e.scale, k: 0.5 });
   }
 
+  if (lineup.on) for (const sh of lineup.shadows) shadows.push(sh);
   const ox = cam.ix;
   const farOff = Math.floor(cam.x * FAR_P);
   const midOff = Math.floor(cam.x * MID_P);
@@ -107,7 +108,13 @@ function compose(visLeft = 0, visRight = VIEW_W) {
       frame32[fi] = ((0xff << 24) | (b << 16) | (g << 8) | r) >>> 0;
     }
   }
-  drawBars(visLeft, visRight);
+  if (lineup.on) drawLineupMarks(visLeft);
+  else {
+    drawBars(visLeft, visRight);
+    drawHud(visLeft);
+    drawBanner(visLeft, visRight);
+  }
+  if (cfg.skeleton) drawSkeletonPx();
   offCtx.putImageData(image, 0, 0);
 }
 
@@ -163,28 +170,6 @@ function drawBars(visLeft, visRight) {
   drawBossBar(visLeft, visRight);
 }
 
-// A tiny 3×5 pixel font for the boss's name.
-const FONT = {
-  A: ['.#.', '#.#', '###', '#.#', '#.#'], D: ['##.', '#.#', '#.#', '#.#', '##.'],
-  G: ['.##', '#..', '#.#', '#.#', '.##'], I: ['###', '.#.', '.#.', '.#.', '###'],
-  O: ['.#.', '#.#', '#.#', '#.#', '.#.'], P: ['##.', '#.#', '##.', '#..', '#..'],
-  R: ['##.', '#.#', '##.', '#.#', '#.#'], T: ['###', '.#.', '.#.', '.#.', '.#.'],
-  U: ['#.#', '#.#', '#.#', '#.#', '###'],
-};
-const TEXT = pack(hexRgb('#efe6dc'));
-
-function pixelText(text, x, y) {
-  for (const chr of text) {
-    const g = FONT[chr];
-    if (g) {
-      g.forEach((row, j) => {
-        for (let i = 0; i < 3; i++) if (row[i] === '#') { px(x + i + 1, y + j + 1, BAR.frame); px(x + i, y + j, TEXT); }
-      });
-    }
-    x += 4;
-  }
-}
-
 // The boss gets a wide bar and his name along the bottom of the screen.
 function drawBossBar(visLeft, visRight) {
   const e = BOSS.active;
@@ -196,102 +181,65 @@ function drawBossBar(visLeft, visRight) {
   const fill = rage && Math.floor(simTime * 8) % 2 ? BAR.burn : BAR.boss;
   bar(x, y, w, 3, e.hp / e.maxHp, e.hpGhost / e.maxHp, fill, BAR.bossHi);
   const name = BOSS.name;
-  pixelText(name, Math.round((visLeft + visRight) / 2 - (name.length * 4 - 1) / 2), y - 8);
+  pixelText(name, Math.round((visLeft + visRight - textWidth(name, FONT3)) / 2), y - 8);
 }
 
 // ---------------------------------------------------------------------------
 // Draw to the screen canvas
 // ---------------------------------------------------------------------------
+// Pixel-art rules: the 256×144 frame is only ever scaled by a whole number with
+// nearest-neighbor, the rest of the screen is black bars, and every offset (bars,
+// the phone's follow camera, screen shake) is a whole number of frame pixels.
 let view = { s: 1, ox: 0, oy: 0 };
-let screenCam = null;
+let follow = null; // narrow screens: left edge of the visible part, in frame pixels
 
 function draw() {
   const cw = canvas.width;
   const chh = canvas.height;
-  let s = Math.min(cw / VIEW_W, chh / H);
-  // Narrow (portrait) screens: zoom in, show ~55% of the view and follow the hero.
-  const zoom = Math.min(chh / H, cw / (VIEW_W * 0.55));
-  if (zoom > s) s = zoom;
-  if (s >= 2) s = Math.floor(s);
+  // Largest whole scale that fits; never below 1 (a tiny canvas crops instead).
+  let s = Math.max(1, Math.floor(Math.min(cw / VIEW_W, chh / H)));
+  // Narrow (portrait) screens: a bigger whole scale that shows at least ~55% of the
+  // width and follows the hero, instead of a thin strip.
+  const zoom = Math.max(1, Math.floor(Math.min(chh / H, cw / (VIEW_W * 0.55))));
+  if (zoom > s && !lineup.on) s = zoom;
   const dw = VIEW_W * s;
   const dh = H * s;
   let ox;
+  let visLeft = 0;
   if (dw <= cw) {
-    ox = Math.round((cw - dw) / 2);
-    screenCam = null;
+    ox = Math.floor((cw - dw) / 2);
+    follow = null;
   } else {
-    const target = cw / 2 - (ch.x - cam.ix) * s;
-    screenCam = screenCam === null ? target : lerp(screenCam, target, 0.08);
-    ox = Math.round(clamp(screenCam, cw - dw, 0));
+    const visW = cw / s;
+    const target = clamp(ch.x - cam.ix - visW / 2, 0, VIEW_W - visW);
+    follow = follow === null ? target : lerp(follow, target, 0.08);
+    visLeft = Math.round(follow); // the crop moves in whole frame pixels
+    ox = -visLeft * s;
   }
-  compose(Math.max(0, Math.ceil(-ox / s)), Math.min(VIEW_W, Math.floor((cw - ox) / s)));
-  const sh = shake * s * 0.7;
-  view = { s, ox: ox + Math.round((Math.random() - 0.5) * sh), oy: Math.round((chh - dh) / 2 + (Math.random() - 0.5) * sh) };
-  ctx.fillStyle = '#0a0910';
+  const oy = dh <= chh ? Math.floor((chh - dh) / 2) : chh - dh;
+  compose(visLeft, Math.min(VIEW_W, Math.floor((cw - ox) / s)));
+  // Shake in whole frame pixels.
+  const k = shake * 0.7;
+  const sx = Math.round((Math.random() - 0.5) * k);
+  const sy = Math.round((Math.random() - 0.5) * k);
+  view = { s, ox: ox + sx * s, oy: oy + sy * s };
+  ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, cw, chh);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(off, view.ox, view.oy, dw, dh);
-  if (cfg.skeleton && pose && dissolve.state === 'none') drawSkeleton();
 }
 
-function drawSkeleton() {
-  const { s, ox, oy } = view;
-  const P = (x, y) => [ox + (x - cam.ix + 0.5) * s, oy + (y + 0.5) * s];
-  const line = (pts, color, w) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = w;
-    ctx.beginPath();
-    pts.forEach(([x, y], i) => { const [qx, qy] = P(x, y); if (i) ctx.lineTo(qx, qy); else ctx.moveTo(qx, qy); });
-    ctx.stroke();
-  };
-  const dot = (x, y, r, color) => {
-    const [qx, qy] = P(x, y);
-    ctx.fillStyle = color;
-    ctx.beginPath(); ctx.arc(qx, qy, r, 0, Math.PI * 2); ctx.fill();
-  };
-  const w = Math.max(1.5, s * 0.3);
-  const thin = Math.max(1, s * 0.18);
-  const r = Math.max(2, s * 0.45);
-  ctx.save();
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  const bone = 'rgba(120, 225, 255, 0.95)';
-  for (const leg of pose.legs) {
-    line([[pose.hipX, pose.hipY], [leg.jx, leg.jy], [leg.ex, leg.ey]], bone, w);
-    // IK target (where the foot wants to be).
-    const [tx, ty] = P(leg.tx, leg.ty);
-    ctx.strokeStyle = 'rgba(255, 209, 102, 0.95)';
-    ctx.lineWidth = thin;
-    const k = s * 1.2;
-    ctx.beginPath(); ctx.moveTo(tx - k, ty); ctx.lineTo(tx + k, ty); ctx.moveTo(tx, ty - k); ctx.lineTo(tx, ty + k); ctx.stroke();
+// The canvas backing store matches the device pixels exactly, so the browser never
+// resamples the image (that would make some pixels one device pixel wider).
+function fitCanvas(entry) {
+  const dpr = window.devicePixelRatio || 1;
+  const box = entry && entry.devicePixelContentBoxSize && entry.devicePixelContentBoxSize[0];
+  // Exact device pixels when the browser reports them (and they agree with the ratio).
+  if (box && Math.abs(box.inlineSize - entry.contentRect.width * dpr) < 1.5) {
+    canvas.width = Math.max(1, box.inlineSize);
+    canvas.height = Math.max(1, box.blockSize);
+    return;
   }
-  line([[pose.hipX, pose.hipY], [pose.neckX, pose.neckY], [pose.headX, pose.headY]], bone, w);
-  for (const arm of pose.arms) line([[arm.sx, arm.sy], [arm.ex, arm.ey], [arm.hx, arm.hy]], bone, w);
-  line(ch.scarfA.map((p) => [p.x, p.y]), 'rgba(255, 160, 90, 0.9)', thin);
-  line(ch.scarfB.map((p) => [p.x, p.y]), 'rgba(255, 160, 90, 0.9)', thin);
-  line([[pose.headX, pose.headY], [ch.hood.x, ch.hood.y]], 'rgba(200, 160, 255, 0.9)', thin);
-  dot(pose.hipX, pose.hipY, r * 1.2, '#ffffff');
-  dot(pose.neckX, pose.neckY, r, '#ffffff');
-  for (const leg of pose.legs) { dot(leg.jx, leg.jy, r, '#ffffff'); dot(leg.ex, leg.ey, r, '#ffffff'); }
-  for (const arm of pose.arms) { dot(arm.ex, arm.ey, r, '#ffffff'); dot(arm.hx, arm.hy, r * 0.8, '#ffffff'); }
-  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-  ctx.lineWidth = thin;
-  const [hx, hy] = P(pose.headX, pose.headY);
-  ctx.beginPath(); ctx.arc(hx, hy, BODY.headR * s, 0, Math.PI * 2); ctx.stroke();
-  // Enemy skeletons too.
-  ctx.globalAlpha = 0.8;
-  for (const e of enemies) {
-    const E = e.pose;
-    if (!E || e.def.fly || e.state === 'dying') continue;
-    for (const leg of E.legs) line([[E.hipX, E.hipY], [leg.jx, leg.jy], [leg.ex, leg.ey]], 'rgba(160, 255, 170, 0.9)', thin);
-    line([[E.hipX, E.hipY], E.neck, E.head], 'rgba(160, 255, 170, 0.9)', thin);
-    for (const A of E.arms) line([A.sh, A.el, A.hd], 'rgba(160, 255, 170, 0.9)', thin);
-  }
-  ctx.restore();
-}
-
-function fitCanvas() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const rect = canvas.getBoundingClientRect();
   canvas.width = Math.max(1, Math.round(rect.width * dpr));
   canvas.height = Math.max(1, Math.round(rect.height * dpr));
