@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#3d5a2a" />
+    <meta name="description" content="Guti: jogo de tabuleiro de captura por saltos, tomates contra karelas. Campanha, mapas e partidas contra o computador ou a dois." />
+    <title>Guti — Tomates × Karelas</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- Menu inicial -->
+      <section id="screen-menu" class="screen menu" data-screen="menu">
+        <div class="menu-hero">
+          <svg class="hero-board" id="hero-board" aria-hidden="true"></svg>
+          <h1 class="logo">Guti</h1>
+          <p class="tagline"><span class="t">Tomates</span> × <span class="k">Karelas</span></p>
+          <p class="lede">Um jogo de saltos e capturas riscado no chão de terra. Ande pelas linhas, salte por cima do adversário e limpe o tabuleiro.</p>
+        </div>
+        <nav class="menu-actions">
+          <button class="btn primary big" data-go="campaign">Campanha <small>13 fases</small></button>
+          <button class="btn big" data-go="setup">Partida livre <small>contra o computador ou a dois</small></button>
+          <button class="btn ghost" data-action="rules">Como jogar</button>
+        </nav>
+      </section>
+
+      <!-- Campanha -->
+      <section id="screen-campaign" class="screen" data-screen="campaign" hidden>
+        <header class="topbar">
+          <button class="icon-btn" data-go="menu" aria-label="Voltar ao menu">←</button>
+          <h2>Campanha</h2>
+          <span class="star-total" id="star-total"></span>
+        </header>
+        <div class="level-grid" id="level-grid"></div>
+      </section>
+
+      <!-- Partida livre -->
+      <section id="screen-setup" class="screen" data-screen="setup" hidden>
+        <header class="topbar">
+          <button class="icon-btn" data-go="menu" aria-label="Voltar ao menu">←</button>
+          <h2>Partida livre</h2>
+          <span></span>
+        </header>
+        <form class="setup" id="setup-form">
+          <fieldset>
+            <legend>Mapa</legend>
+            <div class="map-grid" id="map-grid"></div>
+          </fieldset>
+          <fieldset>
+            <legend>Adversário</legend>
+            <div class="seg" role="radiogroup">
+              <label><input type="radio" name="mode" value="cpu" checked /><span>Computador</span></label>
+              <label><input type="radio" name="mode" value="local" /><span>2 jogadores</span></label>
+            </div>
+          </fieldset>
+          <fieldset class="cpu-only">
+            <legend>Seu lado</legend>
+            <div class="seg">
+              <label><input type="radio" name="side" value="1" checked /><span>🍅 Tomates</span></label>
+              <label><input type="radio" name="side" value="2" /><span>🥒 Karelas</span></label>
+            </div>
+          </fieldset>
+          <fieldset class="cpu-only">
+            <legend>Dificuldade</legend>
+            <div class="seg wrap" id="difficulty-seg"></div>
+          </fieldset>
+          <fieldset>
+            <legend>Quem começa</legend>
+            <div class="seg">
+              <label><input type="radio" name="first" value="1" checked /><span>Tomates</span></label>
+              <label><input type="radio" name="first" value="2" /><span>Karelas</span></label>
+              <label><input type="radio" name="first" value="0" /><span>Sorteio</span></label>
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend>Regras</legend>
+            <label class="check"><input type="checkbox" name="forceCapture" checked /><span>Captura obrigatória <small>havendo salto, é preciso saltar</small></span></label>
+            <label class="check"><input type="checkbox" name="arcJumps" checked /><span>Saltar pelas curvas <small>os arcos também valem como linha</small></span></label>
+            <label class="check"><input type="checkbox" name="blockedLoses" /><span>Sem lances = derrota <small>desligado: quem não pode mexer passa a vez</small></span></label>
+          </fieldset>
+          <div class="setup-go">
+            <button type="submit" class="btn primary big">Começar partida</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Jogo -->
+      <section id="screen-game" class="screen game" data-screen="game" hidden>
+        <header class="topbar">
+          <button class="icon-btn" data-action="leave" aria-label="Sair da partida">←</button>
+          <h2 id="game-title">Partida</h2>
+          <div class="topbar-right">
+            <button class="icon-btn" data-action="rules" aria-label="Como jogar">?</button>
+            <button class="icon-btn" data-action="sound" id="sound-btn" aria-label="Som ligado">🔊</button>
+          </div>
+        </header>
+        <div class="scoreboard">
+          <div class="player" id="panel-1">
+            <span class="chip t"></span>
+            <div><strong>Tomates</strong><small id="who-1">Você</small></div>
+            <span class="count" id="count-1">0</span>
+          </div>
+          <div class="status" id="status" role="status" aria-live="polite"></div>
+          <div class="player right" id="panel-2">
+            <span class="count" id="count-2">0</span>
+            <div><strong>Karelas</strong><small id="who-2">Computador</small></div>
+            <span class="chip k"></span>
+          </div>
+        </div>
+        <div class="board-wrap" id="board-wrap">
+          <svg id="board" class="board" role="group" aria-label="Tabuleiro" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <footer class="toolbar">
+          <button class="btn small" data-action="undo" id="undo-btn">↶ Desfazer</button>
+          <button class="btn small" data-action="hint" id="hint-btn">💡 Dica</button>
+          <button class="btn small" data-action="restart">↻ Reiniciar</button>
+          <span class="goal" id="goal"></span>
+        </footer>
+      </section>
+    </div>
+
+    <dialog id="modal" class="modal">
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-actions" id="modal-actions"></div>
+    </dialog>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
